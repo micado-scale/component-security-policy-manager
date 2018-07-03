@@ -22,5 +22,5 @@ app.add_url_rule('/v1.0/add_secret','add_secret_api', dksecrets.add_secret_api, 
 app.add_url_rule('/v1.0/initvault','initvault', vaultclient.init_vault_api, methods=['POST'])
 app.add_url_rule('/v1.0/addsecret','write_secret_api', vaultclient.write_secret_api, methods=['POST'])
 app.add_url_rule('/v1.0/readsecret','read_secret_api', vaultclient.read_secret_api, methods=['GET'])
-
+app.add_url_rule('/v1.0/deletesecret','delete_secret_api', vaultclient.delete_secret_api, methods=['PUT'])
 

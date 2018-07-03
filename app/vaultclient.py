@@ -134,3 +134,16 @@ def read_secret_api():
     secret_values = client.read('secret/'+secret_name)
     seal_vault(client)
     return json.dumps(secret_values)
+
+def delete_secret_api():
+    """[summary]
+    Remove a secret from the vault
+    [description]
+    """
+    secret_name = request.values.get("name").encode('ascii','ignore')
+    # unseal the vault
+    client = init_client()
+    unseal_vault(client) 
+    secret_values = client.delete('secret/'+secret_name)
+    seal_vault(client)
+    return "Deleted the secret successfully!"

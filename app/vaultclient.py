@@ -15,13 +15,16 @@ HTTP_CODE_OK = 200
 # Clients's errors
 HTTP_CODE_BAD_REQUEST = 400
 #HTTP_CODE_UNAUTHORIZED = 401
-#HTTP_CODE_NOT_FOUND = 404
+HTTP_CODE_NOT_FOUND = 404
 #HTTP_CODE_LOCKED = 423
 # Server error
 HTTP_CODE_SERVER_ERR = 500
 
 DEFAULT_SHARES = 1
 DEFAULT_THRESHOLD = 1
+
+VAULT_TOKEN_FILE = 'vaulttoken'
+UNSEAL_KEYS_FILE = 'unsealkeys'
 
 # import the resource of all messages
 reader = csv.DictReader(open('resource.csv', 'r'))
@@ -48,30 +51,30 @@ def init_vault_api():
    
     client = init_client()
     
-    if(client.is_initialized()==False):
+    if(client.is_initialized()==False): # if vault is not initialized yet
        vault = client.initialize(shares,threshold)
        root_token = vault['root_token']
        unseal_keys = vault['keys']
        # write root token into file
-       f = open('vaultoken', 'w')
+       f = open(VAULT_TOKEN_FILE, 'w')
        f.write(root_token)
        f.close()
 
 	   # write unseal_keys into file
-       f = open('unsealkeys','w')
+       f = open(UNSEAL_KEYS_FILE,'w')
        for key in unseal_keys:
            f.write("%s\n" % key)
        f.close()
        
        data = {
 			'code' : HTTP_CODE_OK,
-			'user message'  : msg_dict['init_vault_success'],#'Add user successfully',
+			'user message'  : msg_dict['init_vault_success'],#'Initialize vault successfully',
 			'developer message' : msg_dict['init_vault_success']
 		}
-    else:
+    else: # if vault existed
         data = {
 			'code' : HTTP_CODE_OK,
-			'user message'  : msg_dict['vault_existed'],#'Add user successfully',
+			'user message'  : msg_dict['vault_existed'],#Vault is existed
 			'developer message' : msg_dict['vault_existed']
 		}
     
@@ -83,26 +86,26 @@ def init_vault_api():
     
 def read_token():
     """[summary]
-    Read the token from file
+    Read the token from file 'vaulttoken'
     [description]
     
     Returns:
       [type] string -- [description] the token
     """
-    f = open('vaultoken', 'r')
+    f = open(VAULT_TOKEN_FILE, 'r')
     root_token = f.read()
     f.close()
     return root_token
 
 def read_unseal_keys():
     """[summary]
-    Read keys used to unseal the fault from file
+    Read keys used to unseal the fault from file 'unsealkeys'
     [description]
     
     Returns:
       [type] List -- [description] List of keys
     """
-    f = open('unsealkeys', 'r')
+    f = open(UNSEAL_KEYS_FILE, 'r')
     unseal_keys = f.read().splitlines()
     f.close()
     return unseal_keys
@@ -154,7 +157,7 @@ def write_secret_api():
     if(secret_name is None or secret_value  is None): # verify parameters
         data = {
 			'code' : HTTP_CODE_BAD_REQUEST,
-			'user message'  : msg_dict['bad_request_write_secret'],#'Add user successfully',
+			'user message'  : msg_dict['bad_request_write_secret'],#'Bad request',
 			'developer message' : msg_dict['bad_request_write_secret']
 		}
         js = json.dumps(data)
@@ -168,7 +171,7 @@ def write_secret_api():
 
     data = {
         'code' : HTTP_CODE_OK,
-        'user message'  : msg_dict['write_secret_success'],#'Add user successfully',
+        'user message'  : msg_dict['write_secret_success'],#'Add secret successfully',
         'developer message' : msg_dict['write_secret_success']
     }
     js = json.dumps(data)
@@ -202,15 +205,15 @@ def read_secret_api():
     
     if(secret_values is None):
         data = {
-            'code' : HTTP_CODE_OK,
-            'user message'  : msg_dict['secret_not_exist'],#'Add user successfully',
+            'code' : HTTP_CODE_NOT_FOUND,
+            'user message'  : msg_dict['secret_not_exist'],#'Secret does not exist',
             'developer message' : msg_dict['secret_not_exist']
         }
         js = json.dumps(data)
     else:
         data = {
             'code' : HTTP_CODE_OK,
-            'user message'  : msg_dict['read_secret_success'],#'Add user successfully',
+            'user message'  : msg_dict['read_secret_success'],#'Read secret successfully',
             'developer message' : msg_dict['read_secret_success']
         }
         data.update(secret_values)
@@ -228,7 +231,7 @@ def delete_secret_api():
     if(secret_name is None): # verify parameters
         data = {
 			'code' : HTTP_CODE_BAD_REQUEST,
-			'user message'  : msg_dict['bad_request_delete_secret'],#'Add user successfully',
+			'user message'  : msg_dict['bad_request_delete_secret'],#'Lack of secret name',
 			'developer message' : msg_dict['bad_request_delete_secret']
 		}
         js = json.dumps(data)
@@ -243,7 +246,7 @@ def delete_secret_api():
     
     data = {
         'code' : HTTP_CODE_OK,
-        'user message'  : msg_dict['delete_secret_success'],#'Add user successfully',
+        'user message'  : msg_dict['delete_secret_success'],#'Delete secret successfully',
         'developer message' : msg_dict['delete_secret_success']
     }
     js = json.dumps(data)

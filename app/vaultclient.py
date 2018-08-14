@@ -4,8 +4,30 @@ from flask_restful import request
 import hvac
 import os
 import json
+import csv
 
 VAULT_URL = "http://127.0.0.1:8200"
+
+# http codes
+# Success
+HTTP_CODE_OK = 200
+# HTTP_CODE_CREATED = 201
+# Clients's errors
+HTTP_CODE_BAD_REQUEST = 400
+#HTTP_CODE_UNAUTHORIZED = 401
+#HTTP_CODE_NOT_FOUND = 404
+#HTTP_CODE_LOCKED = 423
+# Server error
+HTTP_CODE_SERVER_ERR = 500
+
+DEFAULT_SHARES = 1
+DEFAULT_THRESHOLD = 1
+
+# import the resource of all messages
+reader = csv.DictReader(open('resource.csv', 'r'))
+msg_dict = {}
+for row in reader:
+	msg_dict[row['Code']] = row['Message']
 
 
 # 1. Initialize vault client linking to vault server by ip
@@ -20,6 +42,9 @@ def init_vault_api():
 
     shares = int(request.values.get("shares"))
     threshold = int(request.values.get("threshold"))
+    if(shares is None and threshold is None): # verify parameters
+        shares = DEFAULT_SHARES 
+        threshold = DEFAULT_THRESHOLD
    
     client = init_client()
     
@@ -37,10 +62,22 @@ def init_vault_api():
        for key in unseal_keys:
            f.write("%s\n" % key)
        f.close()
-       return "Initialized vault successfully!"
-    else:
-       return "Vault is alread initialized!"
        
+       data = {
+			'code' : HTTP_CODE_OK,
+			'user message'  : msg_dict['init_vault_success'],#'Add user successfully',
+			'developer message' : msg_dict['init_vault_success']
+		}
+    else:
+        data = {
+			'code' : HTTP_CODE_OK,
+			'user message'  : msg_dict['vault_existed'],#'Add user successfully',
+			'developer message' : msg_dict['vault_existed']
+		}
+    
+    js = json.dumps(data)
+    resp = Response(js, status=HTTP_CODE_OK, mimetype='application/json')
+    return resp
     
 
     
@@ -113,11 +150,30 @@ def write_secret_api():
     """
     secret_name = request.values.get("name").encode('ascii','ignore')
     secret_value = request.values.get("value")
+    
+    if(secret_name is None or secret_value  is None): # verify parameters
+        data = {
+			'code' : HTTP_CODE_BAD_REQUEST,
+			'user message'  : msg_dict['bad_request_write_secret'],#'Add user successfully',
+			'developer message' : msg_dict['bad_request_write_secret']
+		}
+        js = json.dumps(data)
+        resp = Response(js, status=HTTP_CODE_OK, mimetype='application/json')
+        return resp
+
     client = init_client()
     unseal_vault(client)  
     client.write('secret/'+secret_name, secret_value=secret_value, lease='1h')
     seal_vault(client)
-    return "Added secret successfully"
+
+    data = {
+        'code' : HTTP_CODE_OK,
+        'user message'  : msg_dict['write_secret_success'],#'Add user successfully',
+        'developer message' : msg_dict['write_secret_success']
+    }
+    js = json.dumps(data)
+    resp = Response(js, status=HTTP_CODE_OK, mimetype='application/json')
+    return resp
 
 def read_secret_api():
     """[summary]
@@ -128,12 +184,40 @@ def read_secret_api():
       [type] json -- [description] a dictionary of all relevant information of the secret
     """
     secret_name = request.values.get("name").encode('ascii','ignore')
+    
+    if(secret_name is None): # verify parameters
+        data = {
+			'code' : HTTP_CODE_BAD_REQUEST,
+			'user message'  : msg_dict['bad_request_read_secret'],#'Add user successfully',
+			'developer message' : msg_dict['bad_request_read_secret']
+		}
+        js = json.dumps(data)
+        resp = Response(js, status=HTTP_CODE_OK, mimetype='application/json')
+        return resp
     # unseal the vault
     client = init_client()
     unseal_vault(client) 
     secret_values = client.read('secret/'+secret_name)
     seal_vault(client)
-    return json.dumps(secret_values)
+    
+    if(secret_values is None):
+        data = {
+            'code' : HTTP_CODE_OK,
+            'user message'  : msg_dict['secret_not_exist'],#'Add user successfully',
+            'developer message' : msg_dict['secret_not_exist']
+        }
+        js = json.dumps(data)
+    else:
+        data = {
+            'code' : HTTP_CODE_OK,
+            'user message'  : msg_dict['read_secret_success'],#'Add user successfully',
+            'developer message' : msg_dict['read_secret_success']
+        }
+        data.update(secret_values)
+        js = json.dumps(data)
+
+    resp = Response(js, status=HTTP_CODE_OK, mimetype='application/json')
+    return resp
 
 def delete_secret_api():
     """[summary]
@@ -141,9 +225,27 @@ def delete_secret_api():
     [description]
     """
     secret_name = request.values.get("name").encode('ascii','ignore')
+    if(secret_name is None): # verify parameters
+        data = {
+			'code' : HTTP_CODE_BAD_REQUEST,
+			'user message'  : msg_dict['bad_request_delete_secret'],#'Add user successfully',
+			'developer message' : msg_dict['bad_request_delete_secret']
+		}
+        js = json.dumps(data)
+        resp = Response(js, status=HTTP_CODE_OK, mimetype='application/json')
+        return resp
+        
     # unseal the vault
     client = init_client()
     unseal_vault(client) 
     secret_values = client.delete('secret/'+secret_name)
     seal_vault(client)
-    return "Deleted the secret successfully!"
+    
+    data = {
+        'code' : HTTP_CODE_OK,
+        'user message'  : msg_dict['delete_secret_success'],#'Add user successfully',
+        'developer message' : msg_dict['delete_secret_success']
+    }
+    js = json.dumps(data)
+    resp = Response(js, status=HTTP_CODE_OK, mimetype='application/json')
+    return resp

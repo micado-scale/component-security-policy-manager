@@ -5,6 +5,6 @@ ADD wait_for_it.sh /
 RUN easy_install pip
 RUN pip install flask
 RUN pip install flask_restful
+RUN useradd -ms /bin/bash  client
 RUN pip install docker
-RUN pip install hvac
 CMD [ "python", "./my_script.py" ]

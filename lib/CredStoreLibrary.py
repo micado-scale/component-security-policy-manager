@@ -20,7 +20,7 @@ class CredStoreLibrary(object):
         self._status = res.status_code
 
     def add_a_secret(self, name, value):
-        url     = 'http://127.0.0.1:5003/v1.0/addsecret'
+        url     = 'http://127.0.0.1:5003/v1.0/secrets'
         payload = {'name': name, 'value': value}
         res = requests.post(url, data=payload)
         json_data = json.loads(res.text)
@@ -37,14 +37,14 @@ class CredStoreLibrary(object):
                                % (expected_data, self._data))
 
     def delete_a_secret(self, secretname=None,):
-        url     = 'http://127.0.0.1:5003/v1.0/deletesecret'
+        url     = 'http://127.0.0.1:5003/v1.0/secrets'
         payload = {'name': secretname}
         res = requests.put(url, data=payload)
         json_data = json.loads(res.text)
         self._status = json_data['code']
 
     def read_a_secret(self, secretname=None):
-        url     = 'http://127.0.0.1:5003/v1.0/readsecret'
+        url     = 'http://127.0.0.1:5003/v1.0/secrets'
         payload = {'name': secretname}
         res = requests.get(url, data=payload)
         json_data = json.loads(res.text)

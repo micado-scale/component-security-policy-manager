@@ -1,4 +1,3 @@
-
 from app import app, dksecrets
 from app import vaultclient
 
@@ -13,14 +12,13 @@ def index():
 	return "Hello, World!"
    
 app.add_url_rule('/v1.0/','index',index)
-# app.add_url_rule('/getuser','get_user', dbmodels.get_user,methods=['GET'])
-# endpoint to create new user
+
 app.add_url_rule('/v1.0/create_secret','create_secret_api', dksecrets.create_secret_api, methods=['POST'])
 app.add_url_rule('/v1.0/add_secret','add_secret_api', dksecrets.add_secret_api, methods=['POST'])
 
 
-app.add_url_rule('/v1.0/initvault','initvault', vaultclient.init_vault_api, methods=['POST'])
-app.add_url_rule('/v1.0/addsecret','write_secret_api', vaultclient.write_secret_api, methods=['POST'])
-app.add_url_rule('/v1.0/readsecret','read_secret_api', vaultclient.read_secret_api, methods=['GET'])
-app.add_url_rule('/v1.0/deletesecret','delete_secret_api', vaultclient.delete_secret_api, methods=['PUT'])
+app.add_url_rule('/v1.0/vault','initvault', vaultclient.init_vault_api, methods=['POST'])
+app.add_url_rule('/v1.0/secrets','write_secret_api', vaultclient.write_secret_api, methods=['POST'])
+app.add_url_rule('/v1.0/secrets','read_secret_api', vaultclient.read_secret_api, methods=['GET'])
+app.add_url_rule('/v1.0/secrets','delete_secret_api', vaultclient.delete_secret_api, methods=['PUT'])
 

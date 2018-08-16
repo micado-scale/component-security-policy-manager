@@ -6,7 +6,8 @@ import os
 import json
 import csv
 
-VAULT_URL = "http://127.0.0.1:8200"
+# "http://127.0.0.1:8200" for localhost test, "http://credstore:8200" for docker environment
+VAULT_URL = "http://credstore:8200" # If lack of http, it causes error: requests.exceptions.InvalidSchema: No connection adapters were found for 'credstore:8200/v1/sys/init'
 
 # http codes
 # Success
@@ -151,10 +152,10 @@ def write_secret_api():
     name = name of secret
     value = value of secret
     """
-    secret_name = request.values.get("name").encode('ascii','ignore')
+    secret_name = request.values.get("name") # convert string to bytes
     secret_value = request.values.get("value")
     
-    if(secret_name is None or secret_value  is None): # verify parameters
+    if(secret_name.encode('ascii','ignore') is None or secret_value  is None): # verify parameters
         data = {
 			'code' : HTTP_CODE_BAD_REQUEST,
 			'user message'  : msg_dict['bad_request_write_secret'],#'Bad request',
@@ -186,9 +187,9 @@ def read_secret_api():
     Returns:
       [type] json -- [description] a dictionary of all relevant information of the secret
     """
-    secret_name = request.values.get("name").encode('ascii','ignore')
+    secret_name = request.values.get("name")
     
-    if(secret_name is None): # verify parameters
+    if(secret_name.encode('ascii','ignore') is None): # verify parameters
         data = {
 			'code' : HTTP_CODE_BAD_REQUEST,
 			'user message'  : msg_dict['bad_request_read_secret'],#'Add user successfully',
@@ -227,8 +228,8 @@ def delete_secret_api():
     Remove a secret from the vault
     [description]
     """
-    secret_name = request.values.get("name").encode('ascii','ignore')
-    if(secret_name is None): # verify parameters
+    secret_name = request.values.get("name")
+    if(secret_name.encode('ascii','ignore') is None): # verify parameters
         data = {
 			'code' : HTTP_CODE_BAD_REQUEST,
 			'user message'  : msg_dict['bad_request_delete_secret'],#'Lack of secret name',

@@ -34,16 +34,16 @@ With hashicorp vault
 
 + Initialize a vault to store secrets
 
-curl -d "shares=3&threshold=2" -X POST spm:5003/v1.0/initvault
+curl -d "shares=3&threshold=2" -X POST spm:5003/v1.0/vault
 
 + Add a secret 'secret1' into the initialized vault
 
-curl -d "name=secret1&value=123" -X POST spm:5003/v1.0/addsecret
+curl -d "name=secret1&value=123" -X POST spm:5003/v1.0/secrets
 
 + Read a secret named 'secret1' from the vault
 
-curl -d "name=secret1" -X GET spm:5003/v1.0/readsecret
+curl -d "name=secret1" -X GET spm:5003/v1.0/secrets
 
 + Delete a secret named 'secret1' from the vault
 
-curl -d "name=secret1" -X PUT spm:5003/v1.0/deletesecret
+curl -d "name=secret1" -X PUT spm:5003/v1.0/secrets

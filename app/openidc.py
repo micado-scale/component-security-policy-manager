@@ -30,6 +30,11 @@ CLIENT_ID = "appDM"
 REALM_NAME = "Demo"
 CLIENT_SECRET = "d5e62000-4f60-40c3-8642-abfd0a9523e2"
 
+'''SERVER_URL = "http://178.22.71.211:8080/auth/"
+CLIENT_ID = "app01"
+REALM_NAME = "app01"
+CLIENT_SECRET = "e532ea62-2743-4cea-89b3-ffc58664f739"'''
+
 keycloak_openid = KeycloakOpenID(server_url=SERVER_URL,client_id=CLIENT_ID, realm_name=REALM_NAME, client_secret_key=CLIENT_SECRET,verify=True)
 #token = keycloak_openid.token("user01","123")  
 
@@ -39,6 +44,25 @@ keycloak_openid = KeycloakOpenID(server_url=SERVER_URL,client_id=CLIENT_ID, real
 
 #def get_refreshtoken():
 #	return token['refresh_token']
+
+def get_tokens_api():
+	username = request.values.get("username")
+	password = request.values.get("password")
+	try:
+		token = keycloak_openid.token(username,password)
+	except:
+		data = {
+			'code' : HTTP_CODE_UNAUTHORIZED,
+			'user message'  : 'Invalid user credentials',
+			'developer message' : 'Invalid user credentials'
+		}   
+		js = json.dumps(data)
+		resp = Response(js, status=HTTP_CODE_UNAUTHORIZED, mimetype='application/json')
+		return resp
+		
+	js = json.dumps(token)
+	resp = Response(js, status=HTTP_CODE_OK, mimetype='application/json')
+	return resp
     
 def get_userinfo_api():
 	access_token = request.values.get("token")
@@ -90,8 +114,6 @@ def refresh_token_api():
 			
 	js = json.dumps(new_token)
 	resp = Response(js, status=HTTP_CODE_OK, mimetype='application/json')
-	global token
-	token = new_token
 	return resp
 
 def instropect_accesstoken_api():

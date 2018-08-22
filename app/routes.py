@@ -14,7 +14,7 @@ app.add_url_rule('/v1.0/','index',index)
 
 app.add_url_rule('/v1.0/userinfo','get_userinfo_api', openidc.get_userinfo_api, methods=['GET'])
 
-#app.add_url_rule('/v1.0/access_token','get_accesstoken_api', openidc.get_accesstoken_api, methods=['GET'])
+app.add_url_rule('/v1.0/alltokens','get_tokens_api', openidc.get_tokens_api, methods=['GET'])
 
 app.add_url_rule('/v1.0/tokens','logout_api', openidc.logout_api, methods=['DELETE'])
 app.add_url_rule('/v1.0/tokens','refresh_token_api', openidc.refresh_token_api, methods=['PUT'])

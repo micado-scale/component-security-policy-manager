@@ -25,29 +25,25 @@ for row in reader:
 	msg_dict[row['Code']] = row['Message']'''
 
 
-SERVER_URL = "http://178.22.71.211:8080/auth/"
-CLIENT_ID = "app01"
-REALM_NAME = "app01"
-CLIENT_SECRET = "e532ea62-2743-4cea-89b3-ffc58664f739"
+SERVER_URL = "http://10.20.151.49:8180/auth/"
+CLIENT_ID = "appDM"
+REALM_NAME = "Demo"
+CLIENT_SECRET = "d5e62000-4f60-40c3-8642-abfd0a9523e2"
 
 keycloak_openid = KeycloakOpenID(server_url=SERVER_URL,client_id=CLIENT_ID, realm_name=REALM_NAME, client_secret_key=CLIENT_SECRET,verify=True)
-token = keycloak_openid.token("user01","123")  
+#token = keycloak_openid.token("user01","123")  
 
 
-def get_accesstoken_api():
-	return token['access_token']
+#def get_accesstoken_api():
+#	return token['access_token']
 
-def get_refreshtoken():
-	return token['refresh_token']
-	
-def get_userinfo(access_token):
-	userinfo = keycloak_openid.userinfo(access_token)
-	return userinfo
+#def get_refreshtoken():
+#	return token['refresh_token']
     
 def get_userinfo_api():
 	access_token = request.values.get("token")
 	try:
-		userinfo = get_userinfo(access_token)
+		userinfo = keycloak_openid.userinfo(access_token)
 	except:
 		data = {
 			'code' : HTTP_CODE_UNAUTHORIZED,
@@ -64,7 +60,8 @@ def get_userinfo_api():
 	return resp
 
 def logout_api():
-	refresh_token = get_refreshtoken()
+	# refresh_token = get_refreshtoken()
+	refresh_token = request.values.get("token")
 	keycloak_openid.logout(refresh_token)
 		
 	data = {
@@ -78,8 +75,9 @@ def logout_api():
 
 # retrieve the active state of a token
 def refresh_token_api():
+	refresh_token = request.values.get("token")
 	try:
-		new_token = keycloak_openid.refresh_token(token['refresh_token'])
+		new_token = keycloak_openid.refresh_token(refresh_token)
 	except:
 		data = {
 			'code' : HTTP_CODE_UNAUTHORIZED,

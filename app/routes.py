@@ -21,3 +21,5 @@ app.add_url_rule('/v1.0/tokens','refresh_token_api', openidc.refresh_token_api, 
 app.add_url_rule('/v1.0/tokens','instropect_accesstoken_api', openidc.instropect_accesstoken_api, methods=['GET'])
 
 
+app.add_url_rule('/v1.0/clients','set_client_api', openidc.set_client_api, methods=['PUT'])
+

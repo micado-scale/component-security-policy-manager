@@ -5,13 +5,9 @@
 	Library     lib/CredStoreLibrary.py
 
 	*** Test Cases *** 				
-	Print hello 					
-		print_hello
-		Status should be	${http_code_ok}
-
 	User can add a secret
 		Add secret   ${secretname}    ${secretvalue}
-		Status should be    ${http_code_ok}
+		Status should be    ${http_code_created}
 
 	User can read a secret
 		Read secret    ${secretname}
@@ -26,11 +22,21 @@
 		Read secret    ${secret_name}	
 		Status should be    ${http_code_not_found}
 
+	User cannot add a secret with empty name
+		Add secret   ${EMPTY}    ${secretvalue}
+		Status should be    ${http_code_bad_request}
+
+	User cannot add a secret with empty secret
+		Add secret   ${secretname}    ${EMPTY}
+		Status should be    ${http_code_bad_request}
+
 	*** Variables ***
 	${secretname}               secret1
 	${secretvalue}              123
 	${http_code_ok}              200
 	${http_code_not_found}       404
+	${http_code_created}		 201
+	${http_code_bad_request}	 400
 
 	*** Keywords ***
 	Add secret

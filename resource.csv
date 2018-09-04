@@ -1,11 +1,11 @@
 Id,Code,Message
 1,vault_existed,Vault is already initialized!
 2,init_vault_success,Initialize vault successful!
-3,bad_request_write_secret,"Lack of query parameters ""name"" and ""value""!"
-4,bad_request_read_secret,"Lack of query parameters ""name""!"
+3,bad_request_write_secret,Lack of query parameters ‘name’ and/or ‘value’!
+4,bad_request_read_secret,Lack of query parameters ‘name’!
 5,write_secret_success,Added secret successfully!
 6,read_secret_success,Read secret successfully!
-7,bad_request_read_secret,"Lack of query parameters ""name""!"
-8,bad_request_delete_secret,"Lack of query parameters ""name""!"
+7,bad_request_read_secret,Lack of query parameter ‘name’!
+8,bad_request_delete_secret,Lack of query parameter ‘name’!
 9,delete_secret_success,Deleted the secret successfully!
 10,secret_not_exist,The requested secret does not exist. Please check the secret name!

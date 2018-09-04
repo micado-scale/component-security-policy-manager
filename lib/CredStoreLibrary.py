@@ -6,6 +6,9 @@ import os
 import json
 
 http_code_ok = 200
+#http_code_created = 201
+#http_code_bad_request = 404
+
 class CredStoreLibrary(object):
 
     def __init__(self):
@@ -14,10 +17,10 @@ class CredStoreLibrary(object):
         self._status = ''
         self._data = ''
 
-    def print_hello(self):
+    '''def print_hello(self):
         url     = 'http://127.0.0.1:5003/v1.0/'
         res = requests.get(url)
-        self._status = res.status_code
+        self._status = res.status_code'''
 
     def add_a_secret(self, name, value):
         url     = 'http://127.0.0.1:5003/v1.0/secrets'
@@ -39,7 +42,7 @@ class CredStoreLibrary(object):
     def delete_a_secret(self, secretname=None,):
         url     = 'http://127.0.0.1:5003/v1.0/secrets'
         payload = {'name': secretname}
-        res = requests.put(url, data=payload)
+        res = requests.delete(url, data=payload)
         json_data = json.loads(res.text)
         self._status = json_data['code']
 

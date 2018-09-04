@@ -10,8 +10,4 @@ if __name__ == "__main__":
     The main module defines exception handler and runs the web service
     """
     # app.debug = True
-<<<<<<< HEAD
     app.run(host= '0.0.0.0',port=5003)
-=======
-    app.run(host= '0.0.0.0',port=5001)
->>>>>>> 5644cb4b55e39da905113968aab56182547ff1a5

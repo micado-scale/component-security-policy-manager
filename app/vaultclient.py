@@ -8,8 +8,8 @@ import json
 import csv
 
 # "http://127.0.0.1:8200" for localhost test, "http://credstore:8200" for docker environment
-#VAULT_URL = "http://credstore:8200" # If lack of http, it causes error: requests.exceptions.InvalidSchema: No connection adapters were found for 'credstore:8200/v1/sys/init'
-VAULT_URL = "http://127.0.0.1:8200"
+VAULT_URL = "http://credstore:8200" # If lack of http, it causes error: requests.exceptions.InvalidSchema: No connection adapters were found for 'credstore:8200/v1/sys/init'
+#VAULT_URL = "http://127.0.0.1:8200"
 
 # http codes
 # Success
@@ -17,11 +17,7 @@ HTTP_CODE_OK = 200
 HTTP_CODE_CREATED = 201
 # Clients's errors
 HTTP_CODE_BAD_REQUEST = 400
-#HTTP_CODE_UNAUTHORIZED = 401
 HTTP_CODE_NOT_FOUND = 404
-#HTTP_CODE_LOCKED = 423
-# Server error
-#HTTP_CODE_SERVER_ERR = 500
 
 DEFAULT_SHARES = 1
 DEFAULT_THRESHOLD = 1

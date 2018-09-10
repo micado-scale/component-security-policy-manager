@@ -84,38 +84,30 @@ micadoctl.sh addappsecret secret1 123 app1
 
 docker service inspect app1
 
-You shall see something like this
-
-Spec": {
+You shall see something like this:
 	
-		"TaskTemplate": {
-        
-                "ContainerSpec": {
-        
+	Spec": {
+		"TaskTemplate": { 
+            "ContainerSpec": {
                     "Secrets": [
-        
                         {
-
                             "File": {
-
                                 "Name": "secret1",
-
                             },
-
                             "SecretID":,
-
                             "SecretName": "secret1"
-
                         },
-
                         ...
+
 
 ## How to use the automatic test script for managing secrets infrastructure sensitive information:
 
 Assuming that you installed Robot framework successfully (Please follow this link if you has not installed the Robot framework yet: https://github.com/robotframework/QuickStartGuide/blob/master/QuickStart.rst#demo-application)
 
-+ Launch the vault server in localhost
++ Launch the vault server in localhost:
+
 ++ Download the vault server from https://www.vaultproject.io/downloads.html
+
 ++ Create a config file named vault.hcl with the below content:
 
 storage "file" {

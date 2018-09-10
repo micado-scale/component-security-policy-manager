@@ -5,31 +5,42 @@ from flask_restful import reqparse
 import hvac
 import os
 import json
+import logging
+from app import app
 import csv
+
+# import the resource of all messages
+reader = csv.DictReader(open('resource_vault.csv', 'r'))
+msg_dict = {}
+for row in reader:
+    msg_dict[row['Code']] = row['Message']
+
 
 # "http://127.0.0.1:8200" for localhost test, "http://credstore:8200" for docker environment
 VAULT_URL = "http://credstore:8200" # If lack of http, it causes error: requests.exceptions.InvalidSchema: No connection adapters were found for 'credstore:8200/v1/sys/init'
 #VAULT_URL = "http://127.0.0.1:8200"
 
-# http codes
+# HTTP codes
 # Success
 HTTP_CODE_OK = 200
 HTTP_CODE_CREATED = 201
 # Clients's errors
 HTTP_CODE_BAD_REQUEST = 400
 HTTP_CODE_NOT_FOUND = 404
+# Server error
+HTTP_CODE_SERVER_ERR = 500
 
+# Number of generated keys
 DEFAULT_SHARES = 1
+# Number of minimum keys needed to unseal the vault
 DEFAULT_THRESHOLD = 1
 
+
 VAULT_TOKEN_FILE = 'vaulttoken'
+# File to store keys to unseal the vault
 UNSEAL_KEYS_FILE = 'unsealkeys'
 
-# import the resource of all messages
-reader = csv.DictReader(open('resource.csv', 'r'))
-msg_dict = {}
-for row in reader:
-	msg_dict[row['Code']] = row['Message']
+
 
 
 def init_vault_api():
@@ -48,40 +59,59 @@ def init_vault_api():
     shares = args['shares']
     threshold = args['threshold']
 
-    client = init_client()
-    
-    if(client.is_initialized()==False): # if vault is not initialized yet
-        try:
-            vault = client.initialize(shares,threshold)
-            root_token = vault['root_token']
-            unseal_keys = vault['keys']
-            # write root token into file
-            f = open(VAULT_TOKEN_FILE, 'w')
-            f.write(root_token)
-            f.close()
+    if(threshold>shares or (shares>=2 and threshold==1) or shares<=0 or threshold<=0):
+        data = {
+            'code' : HTTP_CODE_BAD_REQUEST,
+            'user message'  : msg_dict['init_vault_fail_due_to_parameter'],
+            'developer message' : msg_dict['init_vault_fail_due_to_parameter']
+        }
+        js = json.dumps(data)
+        resp = Response(js, status=HTTP_CODE_BAD_REQUEST, mimetype='application/json')
+        return resp
 
-	        # write unseal_keys into file
-            f = open(UNSEAL_KEYS_FILE,'w')
-            for key in unseal_keys:
-                f.write("%s\n" % key)
-            f.close()
-        except Exception as e:
-            raise e
-       
+    vault_exist = False
+    try:
+        client = init_client()
+        vault_exist = client.is_initialized()
+    except Exception as e:
+        app.logger.error(e)
         data = {
-			'code' : HTTP_CODE_CREATED,
-			'user message'  : msg_dict['init_vault_success'],#'Initialize vault successfully',
-			'developer message' : msg_dict['init_vault_success']
-		}
-    else: # if vault existed
+            'code' : HTTP_CODE_SERVER_ERR,
+            'user message'  : msg_dict['init_vault_fail'],#'Fail to Initialize vault',
+            'developer message' : msg_dict['init_vault_fail']
+        }
+        js = json.dumps(data)
+        resp = Response(js, status=HTTP_CODE_SERVER_ERR, mimetype='application/json')
+        return resp
+
+    if(vault_exist): # if vault existed
         data = {
-			'code' : HTTP_CODE_OK,
-			'user message'  : msg_dict['vault_existed'],#Vault is existed
-			'developer message' : msg_dict['vault_existed']
-		}
+            'code' : HTTP_CODE_CREATED,
+            'user message'  : msg_dict['vault_existed'],#Vault is existed
+            'developer message' : msg_dict['vault_existed']
+        }
+    else:
+        vault = client.initialize(shares,threshold)
+        root_token = vault['root_token']
+        unseal_keys = vault['keys']
+        # write root token into file
+        f = open(VAULT_TOKEN_FILE, 'w')
+        f.write(root_token)
+        f.close()
+
+    	# write unseal_keys into file
+        f = open(UNSEAL_KEYS_FILE,'w')
+        for key in unseal_keys:
+            f.write("%s\n" % key)
+        f.close()
+        data = {
+            'code' : HTTP_CODE_CREATED,
+            'user message'  : msg_dict['init_vault_success'],#'Initialize vault successfully',
+            'developer message' : msg_dict['init_vault_success']
+        }
     
     js = json.dumps(data)
-    resp = Response(js, status=HTTP_CODE_OK, mimetype='application/json')
+    resp = Response(js, status=HTTP_CODE_CREATED, mimetype='application/json')
     return resp
     
 
@@ -93,10 +123,14 @@ def read_token():
     Returns:
       [type] string -- [description] the token
     """
-    f = open(VAULT_TOKEN_FILE, 'r')
-    root_token = f.read()
-    f.close()
-    return root_token
+    try:
+        f = open(VAULT_TOKEN_FILE, 'r')
+        root_token = f.read()
+        f.close()
+        return root_token
+    except Exception as e:
+        app.logger.error(e)
+        raise
 
 def read_unseal_keys():
     """[summary]
@@ -106,10 +140,14 @@ def read_unseal_keys():
     Returns:
       [type] List -- [description] List of keys
     """
-    f = open(UNSEAL_KEYS_FILE, 'r')
-    unseal_keys = f.read().splitlines()
-    f.close()
-    return unseal_keys
+    try:
+        f = open(UNSEAL_KEYS_FILE, 'r')
+        unseal_keys = f.read().splitlines()
+        f.close()
+        return unseal_keys
+    except Exception as e:
+        app.logger.error(e)
+        raise
 
 def init_client():
     """[summary]
@@ -134,7 +172,7 @@ def unseal_vault(client):
     # unseal the vault
     unseal_keys = read_unseal_keys()
     client.unseal_multi(unseal_keys)
-
+    
 def seal_vault(client):
     """[summary]
     Seal the vault
@@ -153,6 +191,7 @@ def write_secret_api():
         name -- name of secret
         value -- value of secret
     """
+ 
     parser = reqparse.RequestParser()
     parser.add_argument('name',  help='Name of sensitive information')
     parser.add_argument('value', help='Value of sensitive information')
@@ -168,12 +207,25 @@ def write_secret_api():
 			'developer message' : msg_dict['bad_request_write_secret']
 		}
         js = json.dumps(data)
-        resp = Response(js, status=HTTP_CODE_OK, mimetype='application/json')
+        resp = Response(js, status=HTTP_CODE_BAD_REQUEST, mimetype='application/json')
         return resp
     
     client = init_client()
-    unseal_vault(client)  
-    client.write('secret/'+secret_name, secret_value=secret_value, lease='1h')
+    try:
+        unseal_vault(client)  
+    except Exception as e:
+        app.logger.error(e)
+        data = {
+            'code' : HTTP_CODE_SERVER_ERR,
+            'user message'  : msg_dict['vault_not_initialized'],#'Add secret successfully',
+            'developer message' : msg_dict['vault_not_initialized']
+        }
+        js = json.dumps(data)
+        resp = Response(js, status=HTTP_CODE_SERVER_ERR, mimetype='application/json')
+        return resp
+
+    #print client
+    client.write('secret/'+secret_name, secret_value=secret_value)#, lease='1h'
     seal_vault(client)
 
     data = {
@@ -200,6 +252,8 @@ def read_secret_api():
     args = parser.parse_args()
     secret_name = args['name']
 
+    #print secret_name
+
     if(secret_name is None or  secret_name==''): # verify parameters
         data = {
 			'code' : HTTP_CODE_BAD_REQUEST,
@@ -211,7 +265,18 @@ def read_secret_api():
         return resp
     # unseal the vault
     client = init_client()
-    unseal_vault(client) 
+    try:
+        unseal_vault(client)
+    except Exception as e:
+        app.logger.error(e)
+        data = {
+            'code' : HTTP_CODE_SERVER_ERR,
+            'user message'  : msg_dict['vault_not_initialized'],#'Add secret successfully',
+            'developer message' : msg_dict['vault_not_initialized']
+        }
+        js = json.dumps(data)
+        resp = Response(js, status=HTTP_CODE_SERVER_ERR, mimetype='application/json')
+        return resp
     secret_values = client.read('secret/'+secret_name)
     seal_vault(client)
     
@@ -258,7 +323,19 @@ def delete_secret_api():
         
     # unseal the vault
     client = init_client()
-    unseal_vault(client) 
+    try:
+        unseal_vault(client) 
+    except Exception as e:
+        app.logger.error(e)
+        data = {
+            'code' : HTTP_CODE_SERVER_ERR,
+            'user message'  : msg_dict['vault_not_initialized'],#'Add secret successfully',
+            'developer message' : msg_dict['vault_not_initialized']
+        }
+        js = json.dumps(data)
+        resp = Response(js, status=HTTP_CODE_SERVER_ERR, mimetype='application/json')
+        return resp
+
     client.delete('secret/'+secret_name)
     seal_vault(client)
 

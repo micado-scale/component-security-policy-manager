@@ -54,3 +54,10 @@ class CredStoreLibrary(object):
         self._status = json_data['code']
         if(self._status == http_code_ok):
             self._data = json_data['data']['secret_value']
+
+    def init_a_vault(self, shares, threshold):
+        url     = 'http://127.0.0.1:5003/v1.0/vault'
+        payload = {'shares': shares, 'threshold': threshold}
+        res = requests.post(url, data=payload)
+        json_data = json.loads(res.text)
+        self._status = json_data['code'] 

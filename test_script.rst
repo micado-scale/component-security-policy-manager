@@ -4,29 +4,37 @@
 	*** Settings *** 				
 	Library     lib/CredStoreLibrary.py
 
-	*** Test Cases *** 				
-	User can add a secret
+	*** Test Cases *** 	
+	Admin cannot initialize a vault with unsatisfied parameters
+		Init vault     ${shares}   ${invalid_threshold}
+		Status should be 	${http_code_bad_request}
+
+	Admin can initialize a vault
+		Init vault     ${shares}   ${threshold}
+		Status should be 	${http_code_created}
+
+	Admin can add a secret
 		Add secret   ${secretname}    ${secretvalue}
 		Status should be    ${http_code_created}
 
-	User can read a secret
+	Admin can read a secret
 		Read secret    ${secretname}
 		Status should be    ${http_code_ok}
 		Data should be    ${secretvalue}
 
-	User can delete a secret
+	Admin can delete a secret
 		Delete secret    ${secret_name}
 		Status should be    ${http_code_ok}
 
-	User cannot read the deleted secret
+	Admin cannot read the deleted secret
 		Read secret    ${secret_name}	
 		Status should be    ${http_code_not_found}
 
-	User cannot add a secret with empty name
+	Admin cannot add a secret with empty name
 		Add secret   ${EMPTY}    ${secretvalue}
 		Status should be    ${http_code_bad_request}
 
-	User cannot add a secret with empty secret
+	Admin cannot add a secret with empty secret
 		Add secret   ${secretname}    ${EMPTY}
 		Status should be    ${http_code_bad_request}
 
@@ -37,6 +45,9 @@
 	${http_code_not_found}       404
 	${http_code_created}		 201
 	${http_code_bad_request}	 400
+	${shares}					 3
+	${threshold}				 2
+	${invalid_threshold}		 0
 
 	*** Keywords ***
 	Add secret
@@ -50,3 +61,7 @@
 	Delete secret
 		[Arguments]    ${secretname}
 		delete_a_secret    ${secretname}
+
+	Init vault
+		[Arguments]    ${shares}   ${threshold}
+		init_a_vault     ${shares}   ${threshold} 

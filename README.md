@@ -106,9 +106,9 @@ Assuming that you installed Robot framework successfully (Please follow this lin
 
 1. Launch the vault server in localhost:
 
-..* Download the vault server from https://www.vaultproject.io/downloads.html
+  * Download the vault server from https://www.vaultproject.io/downloads.html
 
-..* Create a config file named vault.hcl with the below content:
+  * Create a config file named vault.hcl with the below content:
 
 ```
 storage "file" {
@@ -132,14 +132,14 @@ listener "tcp" {
 
 ```./vault server -config=vault.hcl```
 
-+ Edit the file app/vaultclient.py to change VAULT_URL into
+2. Edit the file app/vaultclient.py to change VAULT_URL into
 
 ```VAULT_URL = "http://127.0.0.1:8200"```
 
-+ Run the source code by command line
+3. Run the source code by command line
 
 ```python my_script.py```
 
-+ Run the test script by command line
+4. Run the test script by command line
 
 ```robot test_script.rst```

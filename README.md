@@ -57,19 +57,18 @@ This module provides APIs to manage sensitive information, including application
 
 You shall see something like this:
 	
-	Spec": {
-		"TaskTemplate": { 
-            "ContainerSpec": {
-                    "Secrets": [
-                        {
-                            "File": {
-                                "Name": "secret1",
-                            },
-                            "SecretID":,
-                            "SecretName": "secret1"
-                        },
-                        ...
-
+```Spec": {
+	"TaskTemplate": { 
+        "ContainerSpec": {
+            "Secrets": [
+            {
+                "File": {
+                    "Name": "secret1",
+                },
+                "SecretID":,
+                "SecretName": "secret1"
+	        },
+            ...```
 
 ## How to use command line in the master node
 
@@ -112,23 +111,17 @@ Assuming that you installed Robot framework successfully (Please follow this lin
 
 ```
 storage "file" {
-
-  path = "datafile"
-
+	path = "datafile"
 }
-
 listener "tcp" {
-
- address     = "127.0.0.1:8200"
-
- tls_disable = 1
-
+	address     = "127.0.0.1:8200"
+	tls_disable = 1
 }
 ```
 
 (all secrets will be written in the file 'datafile' which resides in the same directory with the executable file 'vault')
 
-++ Launch the vault server by command line
+  * Launch the vault server by command line
 
 ```./vault server -config=vault.hcl```
 

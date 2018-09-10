@@ -57,7 +57,8 @@ This module provides APIs to manage sensitive information, including application
 
 You shall see something like this:
 	
-```Spec": {
+```
+Spec": {
 	"TaskTemplate": { 
         "ContainerSpec": {
             "Secrets": [
@@ -68,7 +69,8 @@ You shall see something like this:
                 "SecretID":,
                 "SecretName": "secret1"
 	        },
-            ...```
+            ...
+```
 
 ## How to use command line in the master node
 

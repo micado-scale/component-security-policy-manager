@@ -110,6 +110,7 @@ Assuming that you installed Robot framework successfully (Please follow this lin
 
 ++ Create a config file named vault.hcl with the below content:
 
+```
 storage "file" {
 
   path = "datafile"
@@ -123,6 +124,7 @@ listener "tcp" {
  tls_disable = 1
 
 }
+```
 
 (all secrets will be written in the file 'datafile' which resides in the same directory with the executable file 'vault')
 

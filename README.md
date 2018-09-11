@@ -49,7 +49,7 @@ This module provides APIs to manage sensitive information, including application
 
 + Add an applicaton sensitive information as docker secret and distribute it to containers of the application app1 (If the application service has existing secrets, this function add one more while keeping the other secrets intact):
 
-```curl -d "secret_name=db_pass1&secret_value=123&service=app1" -X POST spm:5003/v1.0/appsecrets```
+```curl -d "secret_name=secret1&secret_value=123&service=app1" -X POST spm:5003/v1.0/appsecrets```
 
 + Verify if the secret is added to the service or not by calling the below command line in the master node
 

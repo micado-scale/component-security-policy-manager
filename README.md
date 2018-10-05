@@ -80,36 +80,6 @@ curl -X GET spm:5003/v1.0/appsecrets/secret1
 
 curl -H "Content-Type: application/json" -d '{"service":"app1"}' -X DELETE spm:5003/v1.0/appsecrets/secret1
 
-
-## How to use command line in the master node
-
-### Infrastructure sensitive information or infrastructure secret
-+ Initialize a vault to store secrets with shares = 2, threshold = 2
-
-```micadoctl.sh initvault 2 2```
-
-+ Add a secret 'secret1' with value 123 into the initialized vault. If the secret exists, it will be overwritten.
-
-```micadoctl.sh addsecret secret1 123```
-
-+ Read a secret named 'secret1' from the vault
-
-```micadoctl.sh readsecret secret1```
-
-+ Delete a secret named 'secret1' from the vault
-
-```micadoctl.sh removesecret secret1```
-
-### Application sensitive information or application secret
-
-+ Add a secret 'secret1' with value 123 in docker secrets and provision it to the service 'app1' (assuming that the service 'app1' is deployed already)
-
-```micadoctl.sh addappsecret secret1 123 app1```
-
-+ Check if 'secret1' is provisioned to 'app1' or not
-
-```docker service inspect app1```
-
 ## How to use the automatic test script for managing secrets infrastructure sensitive information:
 
 Assuming that you installed Robot framework successfully (Please follow this link if you has not installed the Robot framework yet: https://github.com/robotframework/QuickStartGuide/blob/master/QuickStart.rst#demo-application)

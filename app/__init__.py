@@ -12,9 +12,7 @@ from logging.handlers import RotatingFileHandler
 app = Flask(__name__)
 
 from app import routes
-#from app import dksecrets
 
-#if not app.debug:
 # initialize the log handler: The handler used is RotatingFileHandler which rotates the log file when the size of the file exceeds a certain limit.
 logHandler = RotatingFileHandler('error.log', maxBytes=1000, backupCount=1) 
 # set the log handler level
@@ -26,3 +24,4 @@ logHandler.setFormatter(formatter)
 # set the app logger level:  ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'). See http://flask.pocoo.org/docs/0.12/errorhandling/
 app.logger.setLevel(logging.ERROR)
 app.logger.addHandler(logHandler)
+

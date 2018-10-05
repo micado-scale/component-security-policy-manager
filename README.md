@@ -130,6 +130,7 @@ Please notice that the python code must be run with sudo
 
 
 ``` docker swarm init``` 
+
 ``` docker service create --name app1 <docker_image>``` 
 
 3.Run the test script by command line

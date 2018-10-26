@@ -24,6 +24,5 @@ formatter = logging.Formatter(
 logHandler.setFormatter(formatter)
 
 # set the app logger level:  ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL').
-# See http://flask.pocoo.org/docs/0.12/errorhandling/
 app.logger.setLevel(logging.ERROR)
 app.logger.addHandler(logHandler)

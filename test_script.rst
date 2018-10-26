@@ -109,4 +109,3 @@
 	Retrieve application secret id
 		[Arguments]    ${name}
 		retrieve_app_secret_id    ${name}
-

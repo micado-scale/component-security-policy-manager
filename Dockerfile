@@ -7,4 +7,4 @@ RUN pip install flask
 RUN pip install flask_restful
 RUN pip install docker
 RUN pip install hvac
-CMD [ "python", "./my_script.py" ]
+CMD [ "python", "./security_policy_manager.py" ]

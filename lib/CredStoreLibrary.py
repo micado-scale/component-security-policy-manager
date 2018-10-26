@@ -1,5 +1,5 @@
-import requests
 import json
+import requests
 
 http_code_ok = 200
 # http_code_created = 201

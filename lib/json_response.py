@@ -1,12 +1,11 @@
-import csv
 import json
 from flask import Response
 
 
-def create_json_response(http_code,
-                         message_label,
-                         info_for_developer="",
-                         additional_json={}):
+def create(http_code,
+           message_label,
+           info_for_developer="",
+           additional_json={}):
     '''[summary]
     Create a json object to respond a http request
     [description]

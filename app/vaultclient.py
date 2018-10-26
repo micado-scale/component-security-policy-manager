@@ -53,7 +53,7 @@ def read_token():
       [type] string -- [description] the token
     """
     try:
-        f = open(VAULT_TOKEN_FILE, 'r')
+        f = open(VAULT_TOKEN_FILE, 'r', encoding='utf-8')
         root_token = f.read()
         f.close()
         return root_token
@@ -71,7 +71,7 @@ def read_unseal_keys():
       [type] List -- [description] List of keys
     """
     try:
-        f = open(UNSEAL_KEYS_FILE, 'r')
+        f = open(UNSEAL_KEYS_FILE, 'r', encoding='utf-8')
         unseal_keys = f.read().splitlines()
         f.close()
         return unseal_keys
@@ -172,12 +172,12 @@ class Vaults(Resource):
             root_token = vault['root_token']
             unseal_keys = vault['keys']
             # write root token into file
-            f = open(VAULT_TOKEN_FILE, 'w')
+            f = open(VAULT_TOKEN_FILE, 'w', encoding='utf-8')
             f.write(root_token)
             f.close()
 
             # write unseal_keys into file
-            f = open(UNSEAL_KEYS_FILE, 'w')
+            f = open(UNSEAL_KEYS_FILE, 'w', encoding='utf-8')
             for key in unseal_keys:
                 f.write("%s\n" % key)
             f.close()

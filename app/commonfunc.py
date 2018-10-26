@@ -31,6 +31,5 @@ def create_json_response(http_code,
     return resp
 
 
-with open('resource.csv', 'rb') as csvfile:
-    reader = csv.DictReader(csvfile)
-    msg_dict = {row['Code']: row['Message'] for row in reader}
+with open('secretvaultmessages.json', 'r', encoding='utf-8') as messagefile:
+    msg_dict = json.load(messagefile)

@@ -4,6 +4,7 @@ Main module.
 The main module starts the web service
 """
 from app import app
+
 if __name__ == "__main__":
     """[summary]
     [description]

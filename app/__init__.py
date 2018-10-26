@@ -3,12 +3,14 @@ Init module
 [description]
 The init module creates Flask object, databases, and logging handler
 """
-from flask import Flask
 import logging
 from logging.handlers import RotatingFileHandler
+from flask import Flask
 
 # create application object of class Flask
 app = Flask(__name__)
+
+from app import endpoints
 
 # initialize the log handler: The handler used is RotatingFileHandler which
 # rotates the log file when the size of the file exceeds a certain limit.

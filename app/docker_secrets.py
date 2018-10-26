@@ -1,8 +1,8 @@
-from app import app
+import docker
 from flask_restful import Resource
 from flask_restful import request
-import docker
-from .commonfunc import create_json_response
+from app import app
+from lib import json_response
 
 # CONSTANT VALUES
 HTTP_CODE_OK = 200
@@ -99,8 +99,8 @@ class Dksecrets(Resource):
            secret_name == '' or
            secret_value == '' or
            service_name == ''):
-            resp = create_json_response(
-                HTTP_CODE_BAD_REQUEST, 'bad_request_write_dksecret')
+            resp = json_response.create(HTTP_CODE_BAD_REQUEST,
+                                        'bad_request_write_dksecret')
             return resp
 
         if DEBUG_MODE:
@@ -112,8 +112,8 @@ class Dksecrets(Resource):
                 0)  # Get the service by name
         except Exception as e:
             app.logger.error(e)
-            resp = create_json_response(
-                HTTP_CODE_BAD_REQUEST, 'non_exist_service')
+            resp = json_response.create(HTTP_CODE_BAD_REQUEST,
+                                        'non_exist_service')
             return resp
 
         # Create docker secret and add it to corresponding service
@@ -122,8 +122,8 @@ class Dksecrets(Resource):
                 secret_name, secret_value)  # Create docker secret
         except Exception as e:
             # app.logger.error(e)
-            resp = create_json_response(
-                HTTP_CODE_BAD_REQUEST, 'existed_secret')
+            resp = json_response.create(HTTP_CODE_BAD_REQUEST,
+                                        'existed_secret')
             return resp
 
         service_id = service['ID']  # get service_id
@@ -135,7 +135,7 @@ class Dksecrets(Resource):
         try:
             # get the service's current secret list (if existed)
             current_secrets = container_spec['Secrets']
-        except:
+        except Exception:
             pass
 
         # Create list of SecretReference
@@ -156,8 +156,8 @@ class Dksecrets(Resource):
             print("Config of service after update:",
                   client.inspect_service(service=service_name))
 
-        resp = create_json_response(
-            HTTP_CODE_CREATED, 'write_dksecret_success')
+        resp = json_response.create(HTTP_CODE_CREATED,
+                                    'write_dksecret_success')
         return resp
 
 
@@ -189,8 +189,8 @@ class Dksecret(Resource):
                 0)  # Get the service by name
         except Exception as e:
             app.logger.error(e)
-            resp = create_json_response(
-                HTTP_CODE_BAD_REQUEST, 'non_exist_service')
+            resp = json_response.create(HTTP_CODE_BAD_REQUEST,
+                                        'non_exist_service')
             return resp
 
         service_id = service['ID']  # get service_id
@@ -241,7 +241,7 @@ class Dksecret(Resource):
             app.logger.error(e)
             pass
 
-        resp = create_json_response(HTTP_CODE_OK, 'remove_dksecret_success')
+        resp = json_response.create(HTTP_CODE_OK, 'remove_dksecret_success')
         return resp
 
     def get(self, secret_name):
@@ -266,12 +266,13 @@ class Dksecret(Resource):
             if DEBUG_MODE:
                 print('\nSecret id:', secret_id)
             info = {'secret_id': secret_id}
-            resp = create_json_response(
-                HTTP_CODE_OK, 'secret_exists', additional_json=info)
+            resp = json_response.create(HTTP_CODE_OK,
+                                        'secret_exists',
+                                        additional_json=info)
             return resp
         except Exception as e:
             app.logger.error(e)
-            resp = create_json_response(
-                HTTP_CODE_BAD_REQUEST, 'non_exist_secret')
+            resp = json_response.create(HTTP_CODE_BAD_REQUEST,
+                                        'non_exist_secret')
             return resp
 # END - RESOURCES

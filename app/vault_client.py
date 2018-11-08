@@ -30,8 +30,6 @@ DEFAULT_THRESHOLD = 1
 VAULT_TOKEN_FILE = 'vaulttoken'
 # File to store keys to unseal the vault
 UNSEAL_KEYS_FILE = 'unsealkeys'
-
-DEBUG_MODE = False
 # END - CONSTANT VALUES
 
 # MODELS
@@ -56,10 +54,10 @@ def read_token():
         f = open(VAULT_TOKEN_FILE, 'r', encoding='utf-8')
         root_token = f.read()
         f.close()
-        return root_token
     except Exception as e:
         app.logger.error(e)
         raise
+    return root_token
 
 
 def read_unseal_keys():
@@ -140,11 +138,6 @@ class Vaults(Resource):
         shares = marshal_json['shares']
         threshold = marshal_json['threshold']
 
-        if DEBUG_MODE:
-            print('\nINIT VAULT:')
-            print('shares: ', shares)
-            print('threshold: ', threshold)
-
         if(threshold > shares or
            (shares >= 2 and threshold == 1) or
            shares <= 0 or
@@ -165,7 +158,7 @@ class Vaults(Resource):
             return resp
 
         if(vault_exist):  # if vault existed
-            resp = json_response.create(HTTP_CODE_CREATED, 'vault_existed')
+            resp = json_response.create(HTTP_CODE_CREATED, 'vault_exists')
             return resp
         else:
             vault = client.initialize(shares, threshold)
@@ -208,11 +201,6 @@ class Secrets(Resource):
                                         'bad_request_write_secret')
             return resp
 
-        if DEBUG_MODE:
-            print('\nADD SECRET INTO VAULT')
-            print('secret name:', secret_name)
-            print('secret_value:', secret_value)
-
         client = init_client()
         try:
             unseal_vault(client)
@@ -245,9 +233,6 @@ class Secret(Resource):
                                         'bad_request_read_secret')
             return resp
 
-        if DEBUG_MODE:
-            print('READ SECRET FROM VAULT')
-
         # unseal the vault
         client = init_client()
         try:
@@ -276,9 +261,6 @@ class Secret(Resource):
         Remove a secret from the vault
         [description]
         """
-        if DEBUG_MODE:
-            print('\nDELETE SECRET FROM VAULT')
-
         if(secret_name is None or secret_name == ''):  # verify parameters
             # 'Lack of secret name'
             resp = json_response.create(HTTP_CODE_BAD_REQUEST,
@@ -313,9 +295,6 @@ class Secret(Resource):
         Returns:
             [type] -- [description]
         '''
-        if DEBUG_MODE:
-            print('\nUPDATE SECRET FROM VAULT')
-
         json_body = request.json
         secret_value = json_body['value']
 

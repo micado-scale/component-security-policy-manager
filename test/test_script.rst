@@ -2,7 +2,7 @@
 .. code:: robotframework
 
 	*** Settings *** 				
-	Library     lib/CredStoreLibrary.py
+	Library     CredStoreLibrary.py
 
 	*** Test Cases *** 	
 	Admin cannot initialize a vault with unsatisfied parameters

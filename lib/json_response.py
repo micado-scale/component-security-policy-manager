@@ -30,5 +30,5 @@ def create(http_code,
     return resp
 
 
-with open('secretvaultmessages.json', 'r', encoding='utf-8') as messagefile:
+with open('lib/secretvaultmessages.json', 'r', encoding='utf-8') as messagefile:
     msg_dict = json.load(messagefile)

@@ -24,6 +24,13 @@ class CredStoreLibrary(object):
             raise AssertionError("Expected data to be '%s' but was '%s'."
                                  % (expected_data, self._data))
 
+    def init_a_vault(self, shares, threshold):
+        url = 'http://127.0.0.1:5003/v1.0/vaults'
+        payload = {'shares': shares, 'threshold': threshold}
+        res = requests.post(url, json=payload)
+        json_data = json.loads(res.text)
+        self._status = json_data['code']
+
     def add_a_secret(self, name, value):
         url = 'http://127.0.0.1:5003/v1.0/secrets'
         payload = {'name': name, 'value': value}
@@ -51,31 +58,3 @@ class CredStoreLibrary(object):
         self._status = json_data['code']
         if(self._status == http_code_ok):
             self._data = json_data['data']['secret_value']
-
-    def init_a_vault(self, shares, threshold):
-        url = 'http://127.0.0.1:5003/v1.0/vaults'
-        payload = {'shares': shares, 'threshold': threshold}
-        res = requests.post(url, json=payload)
-        json_data = json.loads(res.text)
-        self._status = json_data['code']
-
-    def create_app_secret(self, secretname, secretvalue, servicename):
-        url = 'http://127.0.0.1:5003/v1.0/appsecrets'
-        payload = {'name': secretname,
-                   'value': secretvalue, 'service': servicename}
-        res = requests.post(url, json=payload)
-        json_data = json.loads(res.text)
-        self._status = json_data['code']
-
-    def delete_app_secret(self, secretname, servicename):
-        url = 'http://127.0.0.1:5003/v1.0/appsecrets/' + secretname
-        payload = {'service': servicename}
-        res = requests.delete(url, json=payload)
-        json_data = json.loads(res.text)
-        self._status = json_data['code']
-
-    def retrieve_app_secret_id(self, secretname):
-        url = 'http://127.0.0.1:5003/v1.0/appsecrets/' + secretname
-        res = requests.get(url)
-        json_data = json.loads(res.text)
-        self._status = json_data['code']

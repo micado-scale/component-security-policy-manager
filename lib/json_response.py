@@ -4,25 +4,19 @@ from flask import Response
 
 def create(http_code,
            message_label,
-           info_for_developer="",
            additional_json={}):
     '''[summary]
     Create a json object to respond a http request
     [description]
     Arguments:
-    http_code {[type]} -- [description]
-    message_label {[type]} -- [description]
-    Keyword Arguments:
-    info_for_developer {str} -- [description] (default: {""}) Additional
-    information in string format
-    additional_json {dict} -- [description] (default: {{}}) Additional
-    information in json format
+    http_code {[type]} -- [description] HTTP status code
+    message_label {[type]} -- [description] Message in the HTTP response body
     Returns:
-    Response [type] -- [description] http response
+    Response [type] -- [description] HTTP response object
     '''
     data = {
         'code': http_code,
-        'message': msg_dict[message_label] + info_for_developer
+        'message': msg_dict[message_label]
     }
     data.update(additional_json)
     js = json.dumps(data)

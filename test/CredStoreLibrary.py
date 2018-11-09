@@ -9,8 +9,6 @@ http_code_ok = 200
 class CredStoreLibrary(object):
 
     def __init__(self):
-        # self._sut_path = os.path.join(os.path.dirname(__file__),
-        #                               '..', 'sut', 'login.py')
         self._status = ''
         self._data = ''
 

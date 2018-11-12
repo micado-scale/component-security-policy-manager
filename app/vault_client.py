@@ -68,10 +68,7 @@ class Vaults(Resource):
         shares = marshal_json['shares']
         threshold = marshal_json['threshold']
 
-        if(threshold > shares or
-           (shares >= 2 and threshold == 1) or
-           shares <= 0 or
-           threshold <= 0):
+        if threshold > shares or shares >= 2 and threshold == 1 or shares < 1 or threshold < 1:
             resp = json_response.create(HttpCode.bad_request.value, HttpBody.init_vault_fail_due_to_parameter.value)
             return resp
 
@@ -80,11 +77,11 @@ class Vaults(Resource):
             client = _init_client()
             vault_exist = client.is_initialized()
         except Exception as e:
-            app.logger.error(e)
+            app.logger.exception(e)
             resp = json_response.create(HttpCode.server_error.value, HttpBody.init_vault_fail.value)
             return resp
 
-        if(vault_exist):
+        if vault_exist:
             resp = json_response.create(HttpCode.created.value, HttpBody.vault_exists.value)
             return resp
         else:
@@ -92,15 +89,23 @@ class Vaults(Resource):
             root_token = vault['root_token']
             unseal_keys = vault['keys']
 
-# TODO: exception handling
-            with open(VAULT_TOKEN_FILE, 'w', encoding='utf-8') as token_file:
-                token_file.write(root_token)
+            try:
+                with open(VAULT_TOKEN_FILE, 'w', encoding='utf-8') as token_file:
+                    token_file.write(root_token)
+            except IOError as error:
+                app.logger.exception(error)
+                resp = json_response.create(HttpCode.server_error.value, HttpBody.init_vault_fail.value)
+                return resp
 
-# TODO: exception handling
-            with open(UNSEAL_KEYS_FILE, 'w', encoding='utf-8') as unseal_keys_file:
-                for key in unseal_keys:
-                    # FIXME \n
-                    unseal_keys_file.write("%s\n" % key)
+            try:
+                with open(UNSEAL_KEYS_FILE, 'w', encoding='utf-8') as unseal_keys_file:
+                    for key in unseal_keys:
+                        # FIXME \n
+                        unseal_keys_file.write("%s\n" % key)
+            except IOError as error:
+                app.logger.exception(error)
+                resp = json_response.create(HttpCode.server_error.value, HttpBody.init_vault_fail.value)
+                return resp
 
             resp = json_response.create(HttpCode.created.value, HttpBody.init_vault_success.value)
             return resp
@@ -120,10 +125,7 @@ class Secrets(Resource):
         secret_name = json_body['name']
         secret_value = json_body['value']
 
-        if (secret_name is None or
-            secret_value is None or
-            secret_value == '' or
-                secret_name == ''):
+        if not secret_name or not secret_value:
             resp = json_response.create(HttpCode.bad_request.value, HttpBody.bad_request_write_secret.value)
             return resp
 
@@ -131,7 +133,7 @@ class Secrets(Resource):
         try:
             _unseal_vault(client)
         except Exception as e:
-            app.logger.error(e)
+            app.logger.exception(e)
             resp = json_response.create(HttpCode.server_error.value, HttpBody.vault_not_initialized.value)
             return resp
 
@@ -152,7 +154,7 @@ class Secret(Resource):
         Returns:
             [type] json -- [description] a dictionary of secret data and associated metadata as per Vault documentation
         '''
-        if(secret_name is None or secret_name == ''):
+        if not secret_name:
             resp = json_response.create(HttpCode.bad_request.value, HttpBody.bad_request_read_secret.value)
             return resp
 
@@ -160,14 +162,14 @@ class Secret(Resource):
         try:
             _unseal_vault(client)
         except Exception as e:
-            app.logger.error(e)
+            app.logger.exception(e)
             resp = json_response.create(HttpCode.server_error.value, HttpBody.vault_not_initialized.value)
             return resp
 
         secret_values = client.read('secret/'+secret_name)
         _seal_vault(client)
 
-        if(secret_values is None):
+        if not secret_values:
             resp = json_response.create(HttpCode.not_found.value, HttpBody.secret_not_exist.value)
             return resp
         else:
@@ -181,7 +183,7 @@ class Secret(Resource):
         Delete a secret from the vault
         [description]
         '''
-        if(secret_name is None or secret_name == ''):
+        if not secret_name:
             resp = json_response.create(HttpCode.bad_request.value, HttpBody.bad_request_delete_secret.value)
             return resp
 
@@ -189,7 +191,7 @@ class Secret(Resource):
         try:
             _unseal_vault(client)
         except Exception as e:
-            app.logger.error(e)
+            app.logger.exception(e)
             resp = json_response.create(HttpCode.server_error.value,  HttpBody.vault_not_initialized.value)
             return resp
 
@@ -210,7 +212,7 @@ class Secret(Resource):
         json_body = request.json
         secret_value = json_body['value']
 
-        if(secret_value is None or secret_value == ''):
+        if not secret_value:
             resp = json_response.create(HttpCode.bad_request.value, HttpBody.bad_request_update_secret.value)
             return resp
 
@@ -218,13 +220,13 @@ class Secret(Resource):
         try:
             _unseal_vault(client)
         except Exception as e:
-            app.logger.error(e)
+            app.logger.exception(e)
             resp = json_response.create(HttpCode.server_error.value, HttpBody.vault_not_initialized.value)
             return resp
 
         secret_values = client.read('secret/'+secret_name)
 
-        if(secret_values is None):
+        if not secret_values:
             resp = json_response.create(HttpCode.not_found.value, HttpBody.secret_not_exist.value)
             return resp
         else:
@@ -247,7 +249,7 @@ def _read_token():
         with open(VAULT_TOKEN_FILE, 'r', encoding='utf-8') as token_file:
             root_token = token_file.read()
     except IOError as error:
-        app.logger.error(error)
+        app.logger.exception(error)
         raise
     return root_token
 
@@ -264,7 +266,7 @@ def _read_unseal_keys():
         with open(UNSEAL_KEYS_FILE, 'r', encoding='utf-8') as unseal_keys_file:
             unseal_keys = unseal_keys_file.read().splitlines()
     except IOError as error:
-        app.logger.error(error)
+        app.logger.exception(error)
         raise
     return unseal_keys
 

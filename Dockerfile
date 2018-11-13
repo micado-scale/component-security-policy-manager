@@ -1,10 +1,8 @@
 FROM python:3
-ADD my_script.py /
 ADD app /app
-ADD resource.csv /
-RUN easy_install pip
-RUN pip install flask
-RUN pip install flask_restful
-RUN pip install docker
-RUN pip install hvac
-CMD [ "python", "./my_script.py" ]
+ADD lib /lib
+ADD requirements.txt /
+ADD security_policy_manager.py /
+ADD secretvaultmessages.json /
+RUN pip install -r requirements.txt
+CMD [ "python", "./security_policy_manager.py" ]

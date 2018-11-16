@@ -55,4 +55,4 @@ class CredStoreLibrary(object):
         json_data = json.loads(res.text)
         self._status = json_data['code']
         if(self._status == http_code_ok):
-            self._data = json_data['data']['secret_value']
+            self._data = json_data['secret_value']

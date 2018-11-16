@@ -38,12 +38,16 @@ class HttpBody(Enum):
     INIT_VAULT_BAD_REQUEST = 'init_vault_bad_request'
     VAULT_NOT_INITIALIZED = 'vault_not_initialized'
     WRITE_SECRET_SUCCESS = 'write_secret_success'
+    WRITE_SECRET_FAIL = 'write_secret_fail'
     WRITE_SECRET_BAD_REQUEST = 'write_secret_bad_request'
     READ_SECRET_SUCCESS = 'read_secret_success'
+    READ_SECRET_FAIL = 'read_secret_fail'
     READ_SECRET_BAD_REQUEST = 'read_secret_bad_request'
     UPDATE_SECRET_SUCCESS = 'update_secret_success'
+    UPDATE_SECRET_FAIL = 'update_secret_fail'
     UPDATE_SECRET_BAD_REQUEST = 'update_secret_bad_request'
     DELETE_SECRET_SUCCESS = 'delete_secret_success'
+    DELETE_SECRET_FAIL = 'delete_secret_fail'
     DELETE_SECRET_BAD_REQUEST = 'delete_secret_bad_request'
     SECRET_NOT_EXIST = 'secret_not_exist'
 
@@ -63,48 +67,54 @@ class Vaults(Resource):
         '''
         app.logger.debug('Init vault endpoint called')
 
-        json_body = request.json
+        vault_params = marshal(request.json, _vault_init_params)
 
-        marshal_json = marshal(json_body, _vault_init_params)
-
-        shares = marshal_json['shares']
-        threshold = marshal_json['threshold']
+        shares = vault_params['shares']
+        threshold = vault_params['threshold']
 
         if threshold > shares or shares >= 2 and threshold == 1 or shares < 1 or threshold < 1:
             resp = json_response.create(HttpCode.BAD_REQUEST.value, HttpBody.INIT_VAULT_BAD_REQUEST.value)
             return resp
 
         vault_exist = False
+
+        client = _init_client()
+
         try:
-            client = _init_client()
-            vault_exist = client.is_initialized()
-        except Exception as e:
-            app.logger.exception(e)
+            vault_exist = client.sys.is_initialized()
+        except Exception as error:
+            app.logger.exception(error)
             resp = json_response.create(HttpCode.SERVER_ERROR.value, HttpBody.INIT_VAULT_FAIL.value)
             return resp
 
         if vault_exist:
             resp = json_response.create(HttpCode.CREATED.value, HttpBody.VAULT_EXISTS.value)
             return resp
-        else:
-            vault = client.initialize(shares, threshold)
-            root_token = vault['root_token']
-            unseal_keys = vault['keys']
 
-            try:
-                _write_token(root_token)
-            except IOError as error:
-                resp = json_response.create(HttpCode.SERVER_ERROR.value, HttpBody.INIT_VAULT_FAIL.value)
-                return resp
-
-            try:
-                _write_unseal_keys(unseal_keys)
-            except IOError as error:
-                resp = json_response.create(HttpCode.SERVER_ERROR.value, HttpBody.INIT_VAULT_FAIL.value)
-                return resp
-
-            resp = json_response.create(HttpCode.CREATED.value, HttpBody.INIT_VAULT_SUCCESS.value)
+        try:
+            vault = client.sys.initialize(shares, threshold)
+        except Exception as error:
+            app.logger.exception(error)
+            resp = json_response.create(HttpCode.SERVER_ERROR.value, HttpBody.INIT_VAULT_FAIL.value)
             return resp
+
+        root_token = vault['root_token']
+        unseal_keys = vault['keys']
+
+        try:
+            _write_token(root_token)
+        except IOError as error:
+            resp = json_response.create(HttpCode.SERVER_ERROR.value, HttpBody.INIT_VAULT_FAIL.value)
+            return resp
+
+        try:
+            _write_unseal_keys(unseal_keys)
+        except IOError as error:
+            resp = json_response.create(HttpCode.SERVER_ERROR.value, HttpBody.INIT_VAULT_FAIL.value)
+            return resp
+
+        resp = json_response.create(HttpCode.CREATED.value, HttpBody.INIT_VAULT_SUCCESS.value)
+        return resp
 
 
 class Secrets(Resource):
@@ -119,25 +129,32 @@ class Secrets(Resource):
         '''
         app.logger.debug('Create / update secret endpoint called')
 
-        json_body = request.json
-        secret_name = json_body['name']
-        secret_value = json_body['value']
+        secret_name = request.json['name']
+        secret_value = request.json['value']
 
         if not secret_name or not secret_value:
             resp = json_response.create(HttpCode.BAD_REQUEST.value, HttpBody.WRITE_SECRET_BAD_REQUEST.value)
             return resp
 
         client = _init_client()
+
         try:
             _unseal_vault(client)
-        except Exception as e:
-            app.logger.exception(e)
+        except Exception as error:
+            app.logger.exception(error)
             resp = json_response.create(HttpCode.SERVER_ERROR.value, HttpBody.VAULT_NOT_INITIALIZED.value)
             return resp
 
-        client.write('secret/'+secret_name,
-                     secret_value=secret_value)
-        _seal_vault(client)
+        secret = {'secret_value': secret_value}
+
+        try:
+            client.secrets.kv.v1.create_or_update_secret(path=secret_name, secret=secret)
+        except Exception as error:
+            app.logger.exception(error)
+            resp = json_response.create(HttpCode.SERVER_ERROR.value, HttpBody.WRITE_SECRET_FAIL.value)
+            return resp
+        finally:
+            _seal_vault(client)
 
         resp = json_response.create(HttpCode.CREATED.value, HttpBody.WRITE_SECRET_SUCCESS.value)
         return resp
@@ -159,6 +176,7 @@ class Secret(Resource):
             return resp
 
         client = _init_client()
+
         try:
             _unseal_vault(client)
         except Exception as e:
@@ -166,41 +184,21 @@ class Secret(Resource):
             resp = json_response.create(HttpCode.SERVER_ERROR.value, HttpBody.VAULT_NOT_INITIALIZED.value)
             return resp
 
-        secret_values = client.read('secret/'+secret_name)
-        _seal_vault(client)
-
-        if not secret_values:
+        try:
+            secret = client.secrets.kv.v1.read_secret(path=secret_name)
+        except hvac.exceptions.InvalidPath as error:
             resp = json_response.create(HttpCode.NOT_FOUND.value, HttpBody.SECRET_NOT_EXIST.value)
             return resp
-        else:
-            resp = json_response.create(HttpCode.OK.value,
-                                        HttpBody.READ_SECRET_SUCCESS.value,
-                                        additional_json=secret_values)
+        except Exception as error:
+            app.logger.exception(error)
+            resp = json_response.create(HttpCode.SERVER_ERROR.value, HttpBody.READ_SECRET_FAIL.value)
             return resp
+        finally:
+            _seal_vault(client)
 
-    def delete(self, secret_name):
-        '''[summary]
-        Delete a secret from the vault
-        [description]
-        '''
-        app.logger.debug('Delete secret endpoint called')
-
-        if not secret_name:
-            resp = json_response.create(HttpCode.BAD_REQUEST.value, HttpBody.DELETE_SECRET_BAD_REQUEST.value)
-            return resp
-
-        client = _init_client()
-        try:
-            _unseal_vault(client)
-        except Exception as e:
-            app.logger.exception(e)
-            resp = json_response.create(HttpCode.SERVER_ERROR.value,  HttpBody.VAULT_NOT_INITIALIZED.value)
-            return resp
-
-        client.delete('secret/'+secret_name)
-        _seal_vault(client)
-
-        resp = json_response.create(HttpCode.OK.value, HttpBody.DELETE_SECRET_SUCCESS.value)
+        resp = json_response.create(HttpCode.OK.value,
+                                    HttpBody.READ_SECRET_SUCCESS.value,
+                                    additional_json=secret['data'])
         return resp
 
     def put(self, secret_name):
@@ -221,6 +219,7 @@ class Secret(Resource):
             return resp
 
         client = _init_client()
+
         try:
             _unseal_vault(client)
         except Exception as e:
@@ -228,17 +227,63 @@ class Secret(Resource):
             resp = json_response.create(HttpCode.SERVER_ERROR.value, HttpBody.VAULT_NOT_INITIALIZED.value)
             return resp
 
-        secret_values = client.read('secret/'+secret_name)
+        try:
+            secret = client.secrets.kv.v1.read_secret(path=secret_name)
+        except hvac.exceptions.InvalidPath as error:
+            _seal_vault(client)
 
-        if not secret_values:
             resp = json_response.create(HttpCode.NOT_FOUND.value, HttpBody.SECRET_NOT_EXIST.value)
             return resp
-        else:
-            client.write('secret/'+secret_name,
-                         secret_value=secret_value)
-            _seal_vault(client)
-            resp = json_response.create(HttpCode.OK.value, HttpBody.UPDATE_SECRET_SUCCESS.value)
+        except Exception as error:
+            app.logger.exception(error)
+            resp = json_response.create(HttpCode.SERVER_ERROR.value, HttpBody.UPDATE_SECRET_FAIL.value)
             return resp
+
+        secret = {'secret_value': secret_value}
+
+        try:
+            client.secrets.kv.v1.create_or_update_secret(path=secret_name, secret=secret)
+        except Exception as error:
+            app.logger.exception(error)
+            resp = json_response.create(HttpCode.SERVER_ERROR.value, HttpBody.UPDATE_SECRET_FAIL.value)
+            return resp
+        finally:
+            _seal_vault(client)
+
+        resp = json_response.create(HttpCode.OK.value, HttpBody.UPDATE_SECRET_SUCCESS.value)
+        return resp
+
+    def delete(self, secret_name):
+        '''[summary]
+        Delete a secret from the vault
+        [description]
+        '''
+        app.logger.debug('Delete secret endpoint called')
+
+        if not secret_name:
+            resp = json_response.create(HttpCode.BAD_REQUEST.value, HttpBody.DELETE_SECRET_BAD_REQUEST.value)
+            return resp
+
+        client = _init_client()
+
+        try:
+            _unseal_vault(client)
+        except Exception as e:
+            app.logger.exception(e)
+            resp = json_response.create(HttpCode.SERVER_ERROR.value,  HttpBody.VAULT_NOT_INITIALIZED.value)
+            return resp
+
+        try:
+            client.secrets.kv.v1.delete_secret(path=secret_name)
+        except Exception as error:
+            app.logger.exception(error)
+            resp = json_response.create(HttpCode.SERVER_ERROR.value, HttpBody.DELETE_SECRET_FAIL.value)
+            return resp
+        finally:
+            _seal_vault(client)
+
+        resp = json_response.create(HttpCode.OK.value, HttpBody.DELETE_SECRET_SUCCESS.value)
+        return resp
 
 
 def _write_token(root_token):
@@ -338,7 +383,8 @@ def _unseal_vault(client):
 
     client.token = _read_token()
     unseal_keys = _read_unseal_keys()
-    client.unseal_multi(unseal_keys)
+
+    client.sys.submit_unseal_keys(unseal_keys)
 
     app.logger.debug('Vault unsealed')
 
@@ -353,7 +399,7 @@ def _seal_vault(client):
     '''
     app.logger.debug('Sealing vault')
 
-    client.seal()
+    client.sys.seal()
 
     app.logger.debug('Vault sealed')
 

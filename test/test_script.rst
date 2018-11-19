@@ -5,14 +5,6 @@
 	Library     CredStoreLibrary.py
 
 	*** Test Cases *** 	
-	Admin cannot initialize a vault with unsatisfied parameters
-		Init vault     ${shares}   ${invalid_threshold}
-		Status should be 	${http_code_bad_request}
-
-	Admin can initialize a vault
-		Init vault     ${shares}   ${threshold}
-		Status should be 	${http_code_created}
-
 	Admin can add a secret
 		Add secret   ${secretname}    ${secretvalue}
 		Status should be    ${http_code_created}
@@ -58,10 +50,6 @@
 	${invalid_threshold}		 0
 
 	*** Keywords ***
-	Init vault
-		[Arguments]    ${shares}   ${threshold}
-		init_a_vault     ${shares}   ${threshold} 
-
 	Add secret
 		[Arguments]    ${name}    ${value}
 		add_a_secret    ${name}    ${value}

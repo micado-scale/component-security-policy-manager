@@ -6,13 +6,16 @@ The init module creates Flask object and log handler
 import logging
 from logging.handlers import RotatingFileHandler
 from flask import Flask
+from flask_restful import Api
+from app import vault_client
+
 
 app = Flask(__name__)
-
-from app import endpoints
+api = Api(app)
+api.add_resource(vault_client.Secrets, '/v1.0/secrets', '/v1.0/secrets/<secret_name>')
 
 logHandler = RotatingFileHandler('error.log', maxBytes=1000, backupCount=1)
-logHandler.setLevel(logging.INFO)
+logHandler.setLevel(logging.DEBUG)
 formatter = logging.Formatter(
     '%(asctime)s - %(name)s - %(module)s - %(funcName)s - %(lineno)d - '
     '%(levelname)s - %(message)s')

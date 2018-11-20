@@ -1,7 +1,7 @@
 from enum import Enum, IntEnum
+import logging
 import hvac
 from flask_restful import request, Resource
-from app import app
 from lib import json_response
 
 
@@ -11,10 +11,10 @@ VAULT_URL = "http://credstore:8200"
 # VAULT_URL = "http://127.0.0.1:8200"
 
 # Number of generated unseal keys
-DEFAULT_SHARES = 1
+VAULT_SHARES = 1
 
 # Minimum number of keys needed to unseal the vault
-DEFAULT_THRESHOLD = 1
+VAULT_THRESHOLD = 1
 
 # File to store vault token
 VAULT_TOKEN_FILE = 'vaulttoken'
@@ -63,97 +63,96 @@ class VaultBackend:
         [description]
         Initializes the Vault, if it has not been initialized yet and unseals it.
         '''
-        app.logger.debug('Initializing Vault.')
+        self.logger = logging.getLogger('flask.app')
 
-        client = hvac.Client(url=VAULT_URL)
+        self.logger.debug('Initializing Vault.')
 
-        try:
-            vault_initialized = client.sys.is_initialized()
-        except Exception as error:
-            app.logger.error('Failed to check if Vault is initialized.')
-            app.logger.debug(error)
-            raise VaultBackendError()
+        self.client = hvac.Client(url=VAULT_URL)
 
-        if vault_initialized:
-            app.logger.debug('Vault already initalized.')
+        if self._is_vault_initialized():
+            self.logger.debug('Vault already initalized.')
 
-            try:
-                with open(VAULT_TOKEN_FILE, 'r', encoding='utf-8') as token_file:
-                    self.token = token_file.read()
-            except IOError as error:
-                app.logger.error('Failed to read Vault token. Will not unseal Vault.')
-                app.logger.debug(error)
-                raise VaultBackendError()
-
-            try:
-                with open(UNSEAL_KEYS_FILE, 'r', encoding='utf-8') as unseal_keys_file:
-                    unseal_keys = unseal_keys_file.read().splitlines()
-            except IOError as error:
-                app.logger.error('Failed to read Vault unseal keys. Will not unseal Vault.')
-                app.logger.debug(error)
-                raise VaultBackendError()
-
+            self._load_keys()
         else:
-            try:
-                vault = client.sys.initialize(1, 1)
-            except Exception as error:
-                app.logger.error('Failed to initialize Vault.')
-                app.logger.debug(error)
-                raise VaultBackendError()
+            vault = self._init_vault()
+            self._token = vault['root_token']
+            self._unseal_keys = vault['keys']
 
-            app.logger.debug('Vault initalized.')
+            self.logger.debug('Vault initalized.')
 
-            self.token = vault['root_token']
+            self._save_keys()
 
-            try:
-                with open(VAULT_TOKEN_FILE, 'w', encoding='utf-8') as token_file:
-                    token_file.write(self.token)
-            except IOError as error:
-                app.logger.error('Failed to write Vault token to file. Will not be able to reconnect.')
-                app.logger.debug(error)
-                raise VaultBackendError()
+        self.client.token = self._token
 
-            unseal_keys = vault['keys']
+        self.logger.debug('Unsealing Vault.')
 
-            try:
-                with open(UNSEAL_KEYS_FILE, 'w', encoding='utf-8') as unseal_keys_file:
-                    for key in unseal_keys:
-                        unseal_keys_file.write("%s\n" % key)
-            except IOError as error:
-                app.logger.error('Failed to write Vault unseal keys to file. Will not be able to reconnect.')
-                app.logger.debug(error)
-                raise VaultBackendError()
+        self._unseal_vault()
 
-        client.token = self.token
+        self.logger.debug('Vault unsealed.')
 
-        app.logger.debug('Unsealing Vault.')
-
+    def _load_keys(self):
         try:
-            client.sys.submit_unseal_keys(unseal_keys)
-        except Exception as error:
-            app.logger.error('Failed to unseal Vault.')
-            app.logger.debug(error)
+            with open(VAULT_TOKEN_FILE, 'r', encoding='utf-8') as token_file:
+                self._token = token_file.read()
+        except IOError as error:
+            self.logger.error('Failed to read Vault token. Will not unseal Vault.')
+            self.logger.debug(error)
             raise VaultBackendError()
 
-        app.logger.debug('Vault unsealed.')
+        try:
+            with open(UNSEAL_KEYS_FILE, 'r', encoding='utf-8') as unseal_keys_file:
+                self._unseal_keys = unseal_keys_file.read().splitlines()
+        except IOError as error:
+            self.logger.error('Failed to read Vault unseal keys. Will not unseal Vault.')
+            self.logger.debug(error)
+            raise VaultBackendError()
 
-    def init_client(self):
-        '''[summary]
-        Initialize the vault client
-        [description]
-        '''
-        app.logger.debug('Initializing vault client')
+    def _save_keys(self):
+        try:
+            with open(VAULT_TOKEN_FILE, 'w', encoding='utf-8') as token_file:
+                token_file.write(self._token)
+        except IOError as error:
+            self.logger.error('Failed to write Vault token to file. Will not be able to reconnect.')
+            self.logger.debug(error)
+            raise VaultBackendError()
 
-        client = hvac.Client(url=VAULT_URL)
-        client.token = self.token
+        try:
+            with open(UNSEAL_KEYS_FILE, 'w', encoding='utf-8') as unseal_keys_file:
+                for key in self._unseal_keys:
+                    unseal_keys_file.write("%s\n" % key)
+        except IOError as error:
+            self.logger.error('Failed to write Vault unseal keys to file. Will not be able to reconnect.')
+            self.logger.debug(error)
+            raise VaultBackendError()
 
-        app.logger.debug('Vault client initialized')
+    def _is_vault_initialized(self):
+        try:
+            return self.client.sys.is_initialized()
+        except Exception as error:
+            self.logger.error('Failed to check if Vault is initialized.')
+            self.logger.debug(error)
+            raise VaultBackendError()
 
-        return client
+    def _init_vault(self):
+        try:
+            return self.client.sys.initialize(VAULT_SHARES, VAULT_THRESHOLD)
+        except Exception as error:
+            self.logger.error('Failed to initialize Vault.')
+            self.logger.debug(error)
+            raise VaultBackendError()
+
+    def _unseal_vault(self):
+        try:
+            self.client.sys.submit_unseal_keys(self._unseal_keys)
+        except Exception as error:
+            self.logger.error('Failed to unseal Vault.')
+            self.logger.debug(error)
+            raise VaultBackendError()
 
 
 class Secrets(Resource):
     def __init__(self):
+        self.logger = logging.getLogger('flask.app')
         self.vault_backend = VaultBackend()
 
     def post(self):
@@ -165,7 +164,7 @@ class Secrets(Resource):
             name -- name of secret
             value -- value of secret
         '''
-        app.logger.debug('Create / update secret endpoint called')
+        self.logger.debug('Create / update secret endpoint called')
 
         secret_name = request.json['name']
         secret_value = request.json['value']
@@ -173,14 +172,12 @@ class Secrets(Resource):
         if not secret_name or not secret_value:
             return json_response.create(HttpCode.BAD_REQUEST.value, HttpBody.WRITE_SECRET_BAD_REQUEST.value)
 
-        client = self.vault_backend.init_client()
-
         secret = {'secret_value': secret_value}
 
         try:
-            client.secrets.kv.v1.create_or_update_secret(path=secret_name, secret=secret)
+            self.vault_backend.client.secrets.kv.v1.create_or_update_secret(path=secret_name, secret=secret)
         except Exception as error:
-            app.logger.exception(error)
+            self.logger.exception(error)
             return json_response.create(HttpCode.SERVER_ERROR.value, HttpBody.WRITE_SECRET_FAIL.value)
 
         return json_response.create(HttpCode.CREATED.value, HttpBody.WRITE_SECRET_SUCCESS.value)
@@ -193,19 +190,17 @@ class Secrets(Resource):
         Returns:
             [type] json -- [description] a dictionary of secret data and associated metadata as per Vault documentation
         '''
-        app.logger.debug('Read secret endpoint called')
+        self.logger.debug('Read secret endpoint called')
 
         if not secret_name:
             return json_response.create(HttpCode.BAD_REQUEST.value, HttpBody.READ_SECRET_BAD_REQUEST.value)
 
-        client = self.vault_backend.init_client()
-
         try:
-            secret = client.secrets.kv.v1.read_secret(path=secret_name)
+            secret = self.vault_backend.client.secrets.kv.v1.read_secret(path=secret_name)
         except hvac.exceptions.InvalidPath as error:
             return json_response.create(HttpCode.NOT_FOUND.value, HttpBody.SECRET_NOT_EXIST.value)
         except Exception as error:
-            app.logger.exception(error)
+            self.logger.exception(error)
             return json_response.create(HttpCode.SERVER_ERROR.value, HttpBody.READ_SECRET_FAIL.value)
 
         return json_response.create(HttpCode.OK.value,
@@ -220,7 +215,7 @@ class Secrets(Resource):
         Arguments:
             secret_name {[type]} -- [description] Name of secret
         '''
-        app.logger.debug('Update secret endpoint called')
+        self.logger.debug('Update secret endpoint called')
 
         json_body = request.json
         secret_value = json_body['value']
@@ -228,22 +223,20 @@ class Secrets(Resource):
         if not secret_value:
             return json_response.create(HttpCode.BAD_REQUEST.value, HttpBody.UPDATE_SECRET_BAD_REQUEST.value)
 
-        client = self.vault_backend.init_client()
-
         try:
-            secret = client.secrets.kv.v1.read_secret(path=secret_name)
+            secret = self.vault_backend.client.secrets.kv.v1.read_secret(path=secret_name)
         except hvac.exceptions.InvalidPath as error:
             return json_response.create(HttpCode.NOT_FOUND.value, HttpBody.SECRET_NOT_EXIST.value)
         except Exception as error:
-            app.logger.exception(error)
+            self.logger.exception(error)
             return json_response.create(HttpCode.SERVER_ERROR.value, HttpBody.UPDATE_SECRET_FAIL.value)
 
         secret = {'secret_value': secret_value}
 
         try:
-            client.secrets.kv.v1.create_or_update_secret(path=secret_name, secret=secret)
+            self.vault_backend.client.secrets.kv.v1.create_or_update_secret(path=secret_name, secret=secret)
         except Exception as error:
-            app.logger.exception(error)
+            self.logger.exception(error)
             return json_response.create(HttpCode.SERVER_ERROR.value, HttpBody.UPDATE_SECRET_FAIL.value)
 
         return json_response.create(HttpCode.OK.value, HttpBody.UPDATE_SECRET_SUCCESS.value)
@@ -253,17 +246,15 @@ class Secrets(Resource):
         Delete a secret from the vault
         [description]
         '''
-        app.logger.debug('Delete secret endpoint called')
+        self.logger.debug('Delete secret endpoint called')
 
         if not secret_name:
             return json_response.create(HttpCode.BAD_REQUEST.value, HttpBody.DELETE_SECRET_BAD_REQUEST.value)
 
-        client = self.vault_backend.init_client()
-
         try:
-            client.secrets.kv.v1.delete_secret(path=secret_name)
+            self.vault_backend.client.secrets.kv.v1.delete_secret(path=secret_name)
         except Exception as error:
-            app.logger.exception(error)
+            self.logger.exception(error)
             return json_response.create(HttpCode.SERVER_ERROR.value, HttpBody.DELETE_SECRET_FAIL.value)
 
         return json_response.create(HttpCode.OK.value, HttpBody.DELETE_SECRET_SUCCESS.value)

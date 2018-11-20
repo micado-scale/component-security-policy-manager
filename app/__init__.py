@@ -7,15 +7,11 @@ import logging
 from logging.handlers import RotatingFileHandler
 from flask import Flask
 from flask_restful import Api
+from app import vault_client
 
 
 app = Flask(__name__)
-
-# FIXME circular reference
-from app import vault_client
-
 api = Api(app)
-# FIXME test methods
 api.add_resource(vault_client.Secrets, '/v1.0/secrets', '/v1.0/secrets/<secret_name>')
 
 logHandler = RotatingFileHandler('error.log', maxBytes=1000, backupCount=1)

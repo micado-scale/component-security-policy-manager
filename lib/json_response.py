@@ -1,6 +1,6 @@
+import logging
 import json
 from flask import Response
-from app import app
 
 
 def create(http_code,
@@ -15,7 +15,9 @@ def create(http_code,
     Returns:
     Response [type] -- [description] HTTP response object
     '''
-    app.logger.debug(f'Creating json response with HTTP status {http_code} message "{msg_dict[message_label]}" and additional prameters {additional_json}')
+    logger = logging.getLogger('flask.app')
+
+    logger.debug(f'Creating json response with HTTP status {http_code} message "{msg_dict[message_label]}" and additional prameters {additional_json}')
     data = {
         'code': http_code,
         'message': msg_dict[message_label]

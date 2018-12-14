@@ -130,7 +130,8 @@ class Dksecrets(Resource):
         if DEBUG_MODE:
             print("Task template", task_tmpl.container_spec)
 
-        client.update_service(service=service_id,name=service_name,version=service_version,task_template=task_tmpl) # Update service with new secret list
+        client.update_service(service=service_id, name=service_name, version=service_version,
+            task_template=task_tmpl, fetch_current_spec=True) # Update service with new secret list
 
         if DEBUG_MODE:
             print("Config of service after update:", client.inspect_service(service=service_name))
@@ -196,7 +197,8 @@ class Dksecret(Resource):
         if DEBUG_MODE:
             print("\nTask template", task_tmpl.container_spec)
 
-        client.update_service(service=service_id,name=service_name,version=service_version,task_template=task_tmpl) # Update service with new secret list
+        client.update_service(service=service_id, name=service_name, version=service_version,
+            task_template=task_tmpl, fetch_current_spec=True) # Update service with new secret list
 
         if DEBUG_MODE:
             print("\nConfig of service after update:", client.inspect_service(service=service_name))

@@ -4,7 +4,7 @@ ADD app /app
 ADD lib /lib
 ADD requirements.txt /
 ADD security_policy_manager.py /
-ADD secretvaultmessages.json /
+ADD lib/secretvaultmessages.json /
 
 RUN apt-get update
 RUN apt-get install -y apt-transport-https

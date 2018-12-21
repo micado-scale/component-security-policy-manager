@@ -4,8 +4,8 @@ from hvac import Client
 
 
 # "http://127.0.0.1:5003" for localhost test,
-# "http://spm:5003" for docker environment
-# SPM_URL = "http://spm:5003"
+# "http://security_policy_manager:5003" for docker environment
+# SPM_URL = "http://security_policy_manager:5003"
 SPM_URL = "http://127.0.0.1:5003"
 
 # "http://127.0.0.1:8200" for localhost test,

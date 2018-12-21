@@ -2,17 +2,9 @@
 .. code:: robotframework
 
 	*** Settings *** 				
-	Library     lib/CredStoreLibrary.py
+	Library     CredStoreLibrary.py
 
 	*** Test Cases *** 	
-	Admin cannot initialize a vault with unsatisfied parameters
-		Init vault     ${shares}   ${invalid_threshold}
-		Status should be 	${http_code_bad_request}
-
-	Admin can initialize a vault
-		Init vault     ${shares}   ${threshold}
-		Status should be 	${http_code_created}
-
 	Admin can add a secret
 		Add secret   ${secretname}    ${secretvalue}
 		Status should be    ${http_code_created}
@@ -45,22 +37,6 @@
 		Add secret   ${secretname}    ${EMPTY}
 		Status should be    ${http_code_bad_request}
 
-	Admin can add an application secret into docker services
-		Add application secret    ${appsecret_name}     ${appsecret_value}    ${servicename}
-		Status should be    ${http_code_created}
-
-	Admin can retrieve secret_id after the secret is created
-		Retrieve application secret id   ${appsecret_name}
-		Status should be    ${http_code_ok} 
-
-	Admin can delete an application secret from docker services
-		Delete application secret    ${appsecret_name}     ${servicename}
-		Status should be    ${http_code_ok}
-
-	Admin cannot retrieve secret_id after the secret is deleted
-		Retrieve application secret id    ${appsecret_name}
-		Status should be    ${http_code_bad_request} 
-
 	*** Variables ***
 	${secretname}               secret1
 	${secretvalue}              123
@@ -72,10 +48,6 @@
 	${shares}					 3
 	${threshold}				 2
 	${invalid_threshold}		 0
-
-	${appsecret_name}            appsecret7
-	${appsecret_value}            123
-	${servicename}               app1
 
 	*** Keywords ***
 	Add secret
@@ -93,20 +65,3 @@
 	Delete secret
 		[Arguments]    ${secretname}
 		delete_a_secret    ${secretname}
-
-	Init vault
-		[Arguments]    ${shares}   ${threshold}
-		init_a_vault     ${shares}   ${threshold} 
-
-	Add application secret
-		[Arguments]    ${name}    ${value}   ${service}
-		create_app_secret    ${name}    ${value}    ${service}
-
-	Delete application secret
-		[Arguments]    ${name}    ${service}
-		delete_app_secret    ${name}    ${service}
-
-	Retrieve application secret id
-		[Arguments]    ${name}
-		retrieve_app_secret_id    ${name}
-

@@ -10,7 +10,7 @@ from flask_restful import Api
 from app.secrets import Secrets
 from app.node_certs import NodeCerts
 from app.node_crl import NodeCrl
-# from app.join_tokens import JoinTokens
+from app.join_tokens import JoinTokens
 
 
 app = Flask(__name__)
@@ -18,7 +18,7 @@ api = Api(app)
 api.add_resource(Secrets, '/v1.0/secrets', '/v1.0/secrets/<secret_name>')
 api.add_resource(NodeCerts, '/v1.0/nodecerts', '/v1.0/nodecerts/<serial>')
 api.add_resource(NodeCrl, '/v1.0/nodecrl')
-# api.add_resource(JoinTokens, '/v1.0/jointokens')
+api.add_resource(JoinTokens, '/v1.0/jointokens', '/v1.0/jointokens/<token>')
 
 logHandler = RotatingFileHandler('error.log', maxBytes=1000, backupCount=1)
 logHandler.setLevel(logging.DEBUG)

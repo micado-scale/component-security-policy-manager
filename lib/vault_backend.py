@@ -5,13 +5,13 @@ from hvac import Client
 
 # "http://127.0.0.1:5003" for localhost test,
 # "http://security_policy_manager:5003" for docker environment
-# SPM_URL = "http://security_policy_manager:5003"
-SPM_URL = "http://127.0.0.1:5003"
+SPM_URL = "http://security_policy_manager:5003"
+#SPM_URL = "http://127.0.0.1:5003"
 
 # "http://127.0.0.1:8200" for localhost test,
 # "http://credstore:8200" for docker environment
-# VAULT_URL = "http://credstore:8200"
-VAULT_URL = "http://127.0.0.1:8200"
+VAULT_URL = "http://vault:8200"
+#VAULT_URL = "http://127.0.0.1:8200"
 
 # Number of generated unseal keys
 VAULT_SHARES = 1

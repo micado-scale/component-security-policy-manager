@@ -1,13 +1,17 @@
 import logging
-import hvac
-from flask_restful import request, Resource
-from lib.json_response import JsonResponse
+import requests
+from hvac import Client
 
+
+# "http://127.0.0.1:5003" for localhost test,
+# "http://spm:5003" for docker environment
+# SPM_URL = "http://spm:5003"
+SPM_URL = "http://127.0.0.1:5003"
 
 # "http://127.0.0.1:8200" for localhost test,
 # "http://credstore:8200" for docker environment
-VAULT_URL = "http://credstore:8200"
-# VAULT_URL = "http://127.0.0.1:8200"
+# VAULT_URL = "http://credstore:8200"
+VAULT_URL = "http://127.0.0.1:8200"
 
 # Number of generated unseal keys
 VAULT_SHARES = 1
@@ -46,7 +50,7 @@ class VaultBackend:
 
             self._logger.debug('Initializing Vault.')
 
-            self.client = hvac.Client(url=VAULT_URL)
+            self.client = Client(url=VAULT_URL)
 
             if self._is_vault_initialized():
                 self._logger.debug('Vault already initalized.')
@@ -129,109 +133,116 @@ class VaultBackend:
             raise VaultBackendError()
 
 
-class Secrets(Resource):
-    def __init__(self):
-        self._logger = logging.getLogger('flask.app')
-        self._vault_backend = VaultBackend()
+class VaultPkiBackend:
+    # The Borg Singleton
+    __shared_state = {}
 
-    def post(self):
-        '''[summary]
-        Create or update a secret in the vault
-        [description]
+    _vault_backend = None
 
-        Arguments:
-            name -- name of secret
-            value -- value of secret
-        '''
-        self._logger.debug('Create / update secret endpoint called')
+    def __init__(self, ):
+        # The Borg Singleton
+        self.__dict__ = self.__shared_state
 
-        secret_name = request.json['name']
-        secret_value = request.json['value']
+        if not self._vault_backend:
+            # this takes care of initialization, getting and the token unsealing
+            self._vault_backend = VaultBackend()
 
-        if not secret_name or not secret_value:
-            return JsonResponse.create(JsonResponse.WRITE_SECRET_BAD_REQUEST)
+            self._logger = logging.getLogger('flask.app')
 
-        secret = {'secret_value': secret_value}
+            self._init_pki()
 
-        try:
-            self._vault_backend.client.secrets.kv.v1.create_or_update_secret(path=secret_name, secret=secret)
-        except Exception as error:
-            self._logger.exception(error)
-            return JsonResponse.create(JsonResponse.WRITE_SECRET_FAIL)
+    def get(self, path):
+        return requests.get(VAULT_URL + path, headers={'X-Vault-Token': self._vault_backend._token})
 
-        return JsonResponse.create(JsonResponse.WRITE_SECRET_SUCCESS)
+    def getAnonymous(self, path):
+        return requests.get(VAULT_URL + path)
 
-    def get(self, secret_name):
-        '''[summary]
-        Read a secret from the vault
-        [description]
+    def post(self, path, payload=None):
+        return requests.post(VAULT_URL + path, headers={'X-Vault-Token': self._vault_backend._token}, json=payload)
 
-        Returns:
-            [type] json -- [description] a dictionary of secret data and associated metadata as per Vault documentation
-        '''
-        self._logger.debug('Read secret endpoint called')
+    def list(self, path):
+        return requests.request('LIST', VAULT_URL + path, headers={'X-Vault-Token': self._vault_backend._token})
 
-        if not secret_name:
-            return JsonResponse.create(JsonResponse.READ_SECRET_BAD_REQUEST)
+    def _init_pki(self):
+        self._logger.debug('Initializing Vault PKI backend.')
 
         try:
-            secret = self._vault_backend.client.secrets.kv.v1.read_secret(path=secret_name)
-        except hvac.exceptions.InvalidPath as error:
-            return JsonResponse.create(JsonResponse.SECRET_NOT_EXIST)
+            if self._mount_pki_backend():
+                self._generate_root_ca()
+                self._set_urls()
+                self._create_role()
+            else:
+                self._logger.debug('Vault PKI backend already initialized.')
         except Exception as error:
-            self._logger.exception(error)
-            return JsonResponse.create(JsonResponse.READ_SECRET_FAIL)
+            self._logger.error('Failed to initialize Vault PKI backend.')
+            self._logger.debug(error)
 
-        return JsonResponse.create(JsonResponse.READ_SECRET_SUCCESS, secret['data'])
+            raise VaultBackendError()
 
-    def put(self, secret_name):
-        '''[summary]
-        Update a secret in the vault
-        [description]
+    def _mount_pki_backend(self):
+        self._logger.debug('Enabling Vault PKI Secrets backend.')
 
-        Arguments:
-            secret_name {[type]} -- [description] Name of secret
-        '''
-        self._logger.debug('Update secret endpoint called')
+        params = {
+            'type': 'pki',
+            'config': {
+                'default_lease_ttl': '8760h',
+                'max_lease_ttl': '43830h'
+            }
+        }
 
-        json_body = request.json
-        secret_value = json_body['value']
+        resp = self.post('/v1/sys/mounts/pki', params)
 
-        if not secret_value:
-            return JsonResponse.create(JsonResponse.UPDATE_SECRET_BAD_REQUEST)
+        self._logger.debug('HTTP %s: %s', resp.status_code, resp.text)
 
-        try:
-            secret = self._vault_backend.client.secrets.kv.v1.read_secret(path=secret_name)
-        except hvac.exceptions.InvalidPath as error:
-            return JsonResponse.create(JsonResponse.SECRET_NOT_EXIST)
-        except Exception as error:
-            self._logger.exception(error)
-            return JsonResponse.create(JsonResponse.UPDATE_SECRET_FAIL)
+        if resp.status_code == 204:
+            return True
+        elif resp.status_code == 400:
+            return False
+        else:
+            raise VaultBackendError()
 
-        secret = {'secret_value': secret_value}
+    def _generate_root_ca(self):
+        self._logger.debug('Generating root CA.')
 
-        try:
-            self._vault_backend.client.secrets.kv.v1.create_or_update_secret(path=secret_name, secret=secret)
-        except Exception as error:
-            self._logger.exception(error)
-            return JsonResponse.create(JsonResponse.UPDATE_SECRET_FAIL)
+        params = {
+            'common_name': 'micado',
+            'ttl': '43830h'
+        }
 
-        return JsonResponse.create(JsonResponse.UPDATE_SECRET_SUCCESS)
+        resp = self.post('/v1/pki/root/generate/internal', params)
 
-    def delete(self, secret_name):
-        '''[summary]
-        Delete a secret from the vault
-        [description]
-        '''
-        self._logger.debug('Delete secret endpoint called')
+        self._logger.debug('HTTP %s: %s', resp.status_code, resp.text)
 
-        if not secret_name:
-            return JsonResponse.create(JsonResponse.DELETE_SECRET_BAD_REQUEST)
+        if resp.status_code != 200:
+            raise VaultBackendError()
 
-        try:
-            self._vault_backend.client.secrets.kv.v1.delete_secret(path=secret_name)
-        except Exception as error:
-            self._logger.exception(error)
-            return JsonResponse.create(JsonResponse.DELETE_SECRET_FAIL)
+    def _set_urls(self):
+        self._logger.debug('Updating distribution URL\'s.')
 
-        return JsonResponse.create(JsonResponse.DELETE_SECRET_SUCCESS)
+        params = {
+            'issuing_certificates': SPM_URL + '/v1.0/nodecerts/ca',
+            'crl_distribution_points': SPM_URL + '/v1.0/nodecrl'
+        }
+
+        resp = self.post('/v1/pki/config/urls', params)
+
+        self._logger.debug('HTTP %s: %s', resp.status_code, resp.text)
+
+        if resp.status_code != 204:
+            raise VaultBackendError()
+
+    def _create_role(self):
+        self._logger.debug('Creating role for signing.')
+
+        params = {
+            'allowed_domains': ['micado'],
+            'allow_subdomains': 'true',
+            'max_ttl': '8760h'
+        }
+
+        resp = self.post('/v1/pki/roles/micado', params)
+
+        self._logger.debug('HTTP %s: %s', resp.status_code, resp.text)
+
+        if resp.status_code != 204:
+            raise VaultBackendError()

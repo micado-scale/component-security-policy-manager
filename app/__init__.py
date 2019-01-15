@@ -16,7 +16,7 @@ from app.image_verify import ImageVerify
 
 app = Flask(__name__)
 
-app.logger.setLevel(logging.DEBUG)
+app.logger.setLevel(logging.INFO)
 
 api = Api(app)
 api.add_resource(Secrets, '/v1.0/secrets', '/v1.0/secrets/<secret_name>')

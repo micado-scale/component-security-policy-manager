@@ -1,5 +1,6 @@
 import logging
 import subprocess
+from flask import request
 from flask import Response
 from flask_restful import Resource
 
@@ -14,7 +15,7 @@ class JoinTokens(Resource):
         [description]
         A new join token is generated for the client and is returned along with the private key.
         '''
-        self._logger.debug('Create join token endpoint called')
+        self._logger.info('Join Tokens endpoint method POST from %s', request.remote_addr)
 
         try:
             res = subprocess.run(['kubeadm', 'token', 'create', '--print-join-command'], capture_output=True)
@@ -34,7 +35,7 @@ class JoinTokens(Resource):
         Arguments:
             [type] string -- [description] client's join token
         '''
-        self._logger.debug('Delete join token endpoint called')
+        self._logger.info('Join Tokens endpoint method DELETE token %s from %s', token, request.remote_addr)
 
         try:
             res = subprocess.run(['kubeadm', 'token', 'delete', token], capture_output=True)

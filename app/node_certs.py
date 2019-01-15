@@ -1,6 +1,6 @@
 import logging
 import json
-from flask import Response
+from flask import request, Response
 from flask_restful import Resource
 from requests import exceptions
 from lib.vault_backend import VaultPkiBackend
@@ -18,7 +18,7 @@ class NodeCerts(Resource):
         [description]
         A new certificate is generated for the client and is returned along with the private key.
         '''
-        self._logger.debug('Register node endpoint called.')
+        self._logger.info('Node Certs endpoint method POST from %s', request.remote_addr)
 
         params = {
             'common_name': 'workernode.micado',
@@ -36,6 +36,9 @@ class NodeCerts(Resource):
             return Response(cert.text, cert.status_code)
         else:
             data = json.loads(cert.text)
+
+            self._logger.info('Generated certificate with serial %s', data['data']['serial_number'])
+
             return Response(data['data']['certificate'], 200)
 
     def get(self, serial=None):
@@ -50,7 +53,7 @@ class NodeCerts(Resource):
         Returns:
             [type] json -- [description] a dictionary of secret data and associated metadata as per Vault documentation
         '''
-        self._logger.debug('Get certificate endpoint called.')
+        self._logger.info('Node Certs endpoint method GET serial %s from %s', serial, request.remote_addr)
 
         if not serial:
             return self._list()
@@ -94,7 +97,7 @@ class NodeCerts(Resource):
         Arguments:
             [type] string -- [description] certificate's serial
         '''
-        self._logger.debug('Revoke certificate endpoint called.')
+        self._logger.info('Node Certs endpoint method DELETE serial %s from %s', serial, request.remote_addr)
 
         if not serial:
             return JsonResponse.create(JsonResponse.DELETE_SECRET_BAD_REQUEST)

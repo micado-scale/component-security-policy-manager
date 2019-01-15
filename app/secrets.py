@@ -19,10 +19,10 @@ class Secrets(Resource):
             name -- name of secret
             value -- value of secret
         '''
-        self._logger.debug('Create / update secret endpoint called')
-
         secret_name = request.json['name']
         secret_value = request.json['value']
+
+        self._logger.info('Secrets endpoint method POST secret "%s" from %s', secret_name, request.remote_addr)
 
         if not secret_name or not secret_value:
             return JsonResponse.create(JsonResponse.WRITE_SECRET_BAD_REQUEST)
@@ -45,7 +45,7 @@ class Secrets(Resource):
         Returns:
             [type] json -- [description] a dictionary of secret data and associated metadata as per Vault documentation
         '''
-        self._logger.debug('Read secret endpoint called')
+        self._logger.info('Secrets endpoint method GET secret "%s" from %s', secret_name, request.remote_addr)
 
         if not secret_name:
             return JsonResponse.create(JsonResponse.READ_SECRET_BAD_REQUEST)
@@ -68,7 +68,7 @@ class Secrets(Resource):
         Arguments:
             secret_name {[type]} -- [description] Name of secret
         '''
-        self._logger.debug('Update secret endpoint called')
+        self._logger.info('Secrets endpoint method PUT secret "%s" from %s', secret_name, request.remote_addr)
 
         json_body = request.json
         secret_value = json_body['value']
@@ -99,7 +99,7 @@ class Secrets(Resource):
         Delete a secret from the vault
         [description]
         '''
-        self._logger.debug('Delete secret endpoint called')
+        self._logger.info('Secrets endpoint method DELETE secret "%s" from %s', secret_name, request.remote_addr)
 
         if not secret_name:
             return JsonResponse.create(JsonResponse.DELETE_SECRET_BAD_REQUEST)

@@ -14,7 +14,7 @@ class CryptoEngine(Resource):
         self._logger = logging.getLogger('flask.app')
 
     def get(self, path):
-        self._logger.debug('Crypto Engine endpoint called.')
+        self._logger.info('Crypto Engine endpoint method GET path %s from %s', path, request.remote_addr)
 
         try:
             resp = requests.post(CRYPTO_ENGINE_URL + '/api/v1.0/' + path)
@@ -26,7 +26,7 @@ class CryptoEngine(Resource):
         return Response(resp.content, resp.status_code)
 
     def post(self, path):
-        self._logger.debug('Crypto Engine endpoint called.')
+        self._logger.info('Crypto Engine endpoint method POST path %s from %s', path, request.remote_addr)
 
         try:
             resp = requests.post(CRYPTO_ENGINE_URL + '/api/v1.0/' + path, data=request.get_data())

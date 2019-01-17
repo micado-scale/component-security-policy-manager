@@ -14,7 +14,7 @@ class ImageVerify(Resource):
         self._logger = logging.getLogger('flask.app')
 
     def post(self):
-        self._logger.debug('Image verify endpoint called.')
+        self._logger.info('Image Verify endpoint method POST from %s', request.remote_addr)
 
         try:
             resp = requests.post(IMAGE_VERIFIER_URL + '/api/v1.0/image_verify', data=request.get_data())

@@ -24,7 +24,7 @@ class JoinTokens(Resource):
             self._logger.debug(error)
             return Response('Unable to generate Kubernetes token.', 500)
 
-        return Response(res.stdout, 200)
+        return Response(res.stdout, 201)
 
     def delete(self, token):
         '''[summary]

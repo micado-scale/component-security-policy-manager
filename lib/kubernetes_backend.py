@@ -52,18 +52,18 @@ class KubernetesBackend:
             api_response = self._api.create_namespaced_secret('default', secret)
         except ApiException as error:
             self._logger.error('Failed to initialize K8S Secret.')
-            self._logger.debug(error)
+            self._logger.info(error)
 
             raise KubernetesBackendError()
 
-        self._logger.debug(api_response.data)
+        self._logger.info(api_response.data)
 
     def _get_secret(self):
         try:
             secret = self._api.read_namespaced_secret('appSecret', 'default')
         except ApiException as error:
             self._logger.error('Failed to read K8S Secret.')
-            self._logger.debug(error)
+            self._logger.info(error)
 
             raise KubernetesBackendError()
 
@@ -74,7 +74,7 @@ class KubernetesBackend:
             self._api.replace_namespaced_secret('appSecret', 'default', secret)
         except ApiException as error:
             self._logger.error('Failed to update K8S Secret.')
-            self._logger.debug(error)
+            self._logger.info(error)
 
             raise KubernetesBackendError()
 

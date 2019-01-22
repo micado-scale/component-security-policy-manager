@@ -29,7 +29,7 @@ class NodeCerts(Resource):
             cert = self._vault_backend.post('/v1/pki/issue/micado', params)
         except exceptions.RequestException as error:
             self._logger.error('Unable to generate certificate in Vault PKI.')
-            self._logger.debug(error)
+            self._logger.info(error)
             return JsonResponse.create(JsonResponse.WRITE_SECRET_FAIL)
 
         if cert.status_code != 200:
@@ -65,7 +65,7 @@ class NodeCerts(Resource):
                 cert = self._vault_backend.getAnonymous('/v1/pki/cert/' + serial)
         except exceptions.RequestException as error:
             self._logger.error('Unable to get certificate from Vault.')
-            self._logger.debug(error)
+            self._logger.info(error)
             return JsonResponse.create(JsonResponse.READ_SECRET_FAIL)
 
         if cert.status_code != 200 or serial == 'ca':
@@ -79,7 +79,7 @@ class NodeCerts(Resource):
             certlist = self._vault_backend.list('/v1/pki/certs')
         except exceptions.RequestException as error:
             self._logger.error('Unable to list certificates in Vault PKI.')
-            self._logger.debug(error)
+            self._logger.info(error)
             return JsonResponse.create(JsonResponse.WRITE_SECRET_FAIL)
 
         if certlist.status_code != 200:
@@ -110,7 +110,7 @@ class NodeCerts(Resource):
             resp = self._vault_backend.post('/v1/pki/revoke', params)
         except exceptions.RequestException as error:
             self._logger.error('Unable to revoke certificate in Vault PKI.')
-            self._logger.debug(error)
+            self._logger.info(error)
             return JsonResponse.create(JsonResponse.DELETE_SECRET_FAIL)
 
         if resp.status_code != 200:

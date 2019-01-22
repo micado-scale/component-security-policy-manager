@@ -21,7 +21,7 @@ class NodeCrl(Resource):
             crl = self._vault_backend.getAnonymous('/v1/pki/crl/pem')
         except exceptions.RequestException as error:
             self._logger.error('Unable to get CRL from Vault.')
-            self._logger.debug(error)
+            self._logger.info(error)
             return JsonResponse.create(JsonResponse.READ_SECRET_FAIL)
 
         return Response(crl.text, crl.status_code)

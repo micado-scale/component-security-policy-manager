@@ -21,7 +21,7 @@ class JoinTokens(Resource):
             res = subprocess.run(['kubeadm', 'token', 'create', '--print-join-command'], capture_output=True)
         except Exception as error:
             self._logger.error('Unable to call kubeadm.')
-            self._logger.debug(error)
+            self._logger.info(error)
             return Response('Unable to generate Kubernetes token.', 500)
 
         return Response(res.stdout, 201)
@@ -41,7 +41,7 @@ class JoinTokens(Resource):
             res = subprocess.run(['kubeadm', 'token', 'delete', token], capture_output=True)
         except Exception as error:
             self._logger.error('Unable to call kubeadm.')
-            self._logger.debug(error)
+            self._logger.info(error)
             return Response('Unable to delete Kubernetes token.', 500)
 
         return Response(res.stdout, 200)

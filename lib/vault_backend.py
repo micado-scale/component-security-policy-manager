@@ -79,7 +79,7 @@ class VaultBackend:
                 self._token = token_file.read()
         except IOError as error:
             self._logger.error('Failed to read Vault token. Will not unseal Vault.')
-            self._logger.debug(error)
+            self._logger.info(error)
             raise VaultBackendError()
 
         try:
@@ -87,7 +87,7 @@ class VaultBackend:
                 self._unseal_keys = unseal_keys_file.read().splitlines()
         except IOError as error:
             self._logger.error('Failed to read Vault unseal keys. Will not unseal Vault.')
-            self._logger.debug(error)
+            self._logger.info(error)
             raise VaultBackendError()
 
     def _save_keys(self):
@@ -96,7 +96,7 @@ class VaultBackend:
                 token_file.write(self._token)
         except IOError as error:
             self._logger.error('Failed to write Vault token to file. Will not be able to reconnect.')
-            self._logger.debug(error)
+            self._logger.info(error)
             raise VaultBackendError()
 
         try:
@@ -105,7 +105,7 @@ class VaultBackend:
                     unseal_keys_file.write("%s\n" % key)
         except IOError as error:
             self._logger.error('Failed to write Vault unseal keys to file. Will not be able to reconnect.')
-            self._logger.debug(error)
+            self._logger.info(error)
             raise VaultBackendError()
 
     def _is_vault_initialized(self):
@@ -113,7 +113,7 @@ class VaultBackend:
             return self.client.sys.is_initialized()
         except Exception as error:
             self._logger.error('Failed to check if Vault is initialized.')
-            self._logger.debug(error)
+            self._logger.info(error)
             raise VaultBackendError()
 
     def _init_vault(self):
@@ -121,7 +121,7 @@ class VaultBackend:
             return self.client.sys.initialize(VAULT_SHARES, VAULT_THRESHOLD)
         except Exception as error:
             self._logger.error('Failed to initialize Vault.')
-            self._logger.debug(error)
+            self._logger.info(error)
             raise VaultBackendError()
 
     def _unseal_vault(self):
@@ -129,7 +129,7 @@ class VaultBackend:
             self.client.sys.submit_unseal_keys(self._unseal_keys)
         except Exception as error:
             self._logger.error('Failed to unseal Vault.')
-            self._logger.debug(error)
+            self._logger.info(error)
             raise VaultBackendError()
 
 
@@ -175,7 +175,7 @@ class VaultPkiBackend:
                 self._logger.info('Vault PKI backend already initialized.')
         except Exception as error:
             self._logger.error('Failed to initialize Vault PKI backend.')
-            self._logger.debug(error)
+            self._logger.info(error)
 
             raise VaultBackendError()
 
@@ -192,7 +192,7 @@ class VaultPkiBackend:
 
         resp = self.post('/v1/sys/mounts/pki', params)
 
-        self._logger.debug('HTTP %s: %s', resp.status_code, resp.text)
+        self._logger.debug('HTTP response from Vault: %s - %s', resp.status_code, resp.text)
 
         if resp.status_code == 204:
             return True
@@ -211,7 +211,7 @@ class VaultPkiBackend:
 
         resp = self.post('/v1/pki/root/generate/internal', params)
 
-        self._logger.debug('HTTP %s: %s', resp.status_code, resp.text)
+        self._logger.debug('HTTP response from Vault: %s - %s', resp.status_code, resp.text)
 
         if resp.status_code != 200:
             raise VaultBackendError()
@@ -226,7 +226,7 @@ class VaultPkiBackend:
 
         resp = self.post('/v1/pki/config/urls', params)
 
-        self._logger.debug('HTTP %s: %s', resp.status_code, resp.text)
+        self._logger.debug('HTTP response from Vault: %s - %s', resp.status_code, resp.text)
 
         if resp.status_code != 204:
             raise VaultBackendError()
@@ -242,7 +242,7 @@ class VaultPkiBackend:
 
         resp = self.post('/v1/pki/roles/micado', params)
 
-        self._logger.debug('HTTP %s: %s', resp.status_code, resp.text)
+        self._logger.debug('HTTP response from Vault: %s - %s', resp.status_code, resp.text)
 
         if resp.status_code != 204:
             raise VaultBackendError()

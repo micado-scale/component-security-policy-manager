@@ -31,7 +31,7 @@ class AppSecrets(Resource):
             self._kubernetes_backend.create_secret(secret_name, secret_value)
         except KubernetesBackendError as error:
             self._logger.error('Unable to create Kubernetes secret.')
-            self._logger.debug(error)
+            self._logger.info(error)
             return Response('Unable to create Kubernetes secret.', 500)
 
         return Response('Created', 201)
@@ -51,7 +51,7 @@ class AppSecrets(Resource):
     #         res = subprocess.run(['kubeadm', 'token', 'delete', token], capture_output=True)
     #     except Exception as error:
     #         self._logger.error('Unable to call kubeadm.')
-    #         self._logger.debug(error)
+    #         self._logger.info(error)
     #         return Response('Unable to delete Kubernetes token.', 500)
 
     #     return Response(res.stdout, 200)

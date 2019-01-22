@@ -20,7 +20,7 @@ class CryptoEngine(Resource):
             resp = requests.post(CRYPTO_ENGINE_URL + '/api/v1.0/' + path)
         except requests.exceptions.RequestException as error:
             self._logger.error('Crypto Engine unreachable.')
-            self._logger.debug(error)
+            self._logger.info(error)
             return Response('Crypto Engine unreachable.', 500)
 
         return Response(resp.content, resp.status_code)
@@ -32,7 +32,7 @@ class CryptoEngine(Resource):
             resp = requests.post(CRYPTO_ENGINE_URL + '/api/v1.0/' + path, data=request.get_data())
         except requests.exceptions.RequestException as error:
             self._logger.error('Crypto Engine unreachable.')
-            self._logger.debug(error)
+            self._logger.info(error)
             return Response('Crypto Engine unreachable.', 500)
 
         return Response(resp.content, resp.status_code)

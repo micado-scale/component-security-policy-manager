@@ -8,6 +8,10 @@ class KubernetesBackendError(Exception):
     pass
 
 
+class KubernetesBackendKeyNotFoundError(Exception):
+    pass
+
+
 class KubernetesBackend:
     # The Borg Singleton
     __shared_state = {}
@@ -88,12 +92,20 @@ class KubernetesBackend:
     def read_secret(self, name):
         secret = self._get_secret()
 
-        # FIXME 404 vs 500
+        if name not in secret:
+            raise KubernetesBackendKeyNotFoundError
 
         return base64.b64decode(secret.data[name])
 
     def update_secret(self, name, value):
-        self.create_secret(name, value)
+        secret = self._get_secret()
+
+        if name not in secret:
+            raise KubernetesBackendKeyNotFoundError
+
+        secret.data[name] = base64.b64encode(value)
+
+        self._put_secret(secret)
 
     def delete_secret(self, name, value):
         secret = self._get_secret()

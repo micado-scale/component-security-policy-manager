@@ -73,7 +73,7 @@ class Secrets(Resource):
         json_body = request.json
         secret_value = json_body['value']
 
-        if not secret_value:
+        if not secret_name or not secret_value:
             return JsonResponse.create(JsonResponse.UPDATE_SECRET_BAD_REQUEST)
 
         try:

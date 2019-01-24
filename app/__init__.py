@@ -10,6 +10,8 @@ from logging.handlers import RotatingFileHandler
 # create application object of class Flask
 app = Flask(__name__)
 
+from app import routes
+
 # initialize the log handler: The handler used is RotatingFileHandler which
 # rotates the log file when the size of the file exceeds a certain limit.
 logHandler = RotatingFileHandler('error.log', maxBytes=1000, backupCount=1)

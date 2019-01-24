@@ -31,6 +31,6 @@ def create_json_response(http_code,
     return resp
 
 
-with open('resource.csv', 'rb') as csvfile:
+with open('resource.csv', 'r') as csvfile:
     reader = csv.DictReader(csvfile)
     msg_dict = {row['Code']: row['Message'] for row in reader}

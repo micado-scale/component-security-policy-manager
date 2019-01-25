@@ -1,7 +1,6 @@
 import logging
 import base64
-import kubernetes.client
-from kubernetes.client.rest import ApiException
+from kubernetes import client, config
 
 
 class KubernetesBackendError(Exception):
@@ -28,9 +27,9 @@ class KubernetesBackend:
 
             self._logger.info('Initializing Kubernetes Client.')
 
-            configuration = kubernetes.client.Configuration()
-            api_client = kubernetes.client.ApiClient(configuration)
-            self._api = kubernetes.client.CoreV1Api(api_client)
+            config.load_kube_config()
+
+            self._api = client.CoreV1Api()
 
             if self._is_secret_initialized():
                 self._logger.info('K8S Secret already initalized.')
@@ -42,41 +41,45 @@ class KubernetesBackend:
                 self._logger.info('K8S Secret initalized.')
 
     def _is_secret_initialized(self):
-        self._get_secret()
+        try:
+            self._get_secret()
+        except KubernetesBackendError:
+            return False
 
         return True
 
     def _init_secret(self):
-        secret = kubernetes.client.V1Secret()
+        secret = client.V1Secret()
         secret.api_version = 'v1'
-        secret.metadata = kubernetes.client.V1ObjectMeta()
-        secret.metadata.name = 'appSecret'
+        secret.metadata = client.V1ObjectMeta()
+        secret.metadata.name = 'micado.appsecret'
 
         try:
             api_response = self._api.create_namespaced_secret('default', secret)
-        except ApiException as error:
+        except Exception as error:
             self._logger.error('Failed to initialize K8S Secret.')
             self._logger.info(error)
 
             raise KubernetesBackendError()
 
-        self._logger.info(api_response.data)
-
     def _get_secret(self):
         try:
-            secret = self._api.read_namespaced_secret('appSecret', 'default')
-        except ApiException as error:
+            secret = self._api.read_namespaced_secret('micado.appsecret', 'default')
+        except Exception as error:
             self._logger.error('Failed to read K8S Secret.')
             self._logger.info(error)
 
             raise KubernetesBackendError()
 
+        if secret.data is None:
+            secret.data = {}
+
         return secret
 
     def _put_secret(self, secret):
         try:
-            self._api.replace_namespaced_secret('appSecret', 'default', secret)
-        except ApiException as error:
+            self._api.replace_namespaced_secret('micado.appsecret', 'default', secret)
+        except Exception as error:
             self._logger.error('Failed to update K8S Secret.')
             self._logger.info(error)
 
@@ -85,29 +88,34 @@ class KubernetesBackend:
     def create_secret(self, name, value):
         secret = self._get_secret()
 
-        secret.data[name] = base64.b64encode(value)
+        secret.data[name] = base64.b64encode(value.encode('UTF-8')).decode('ASCII')
 
         self._put_secret(secret)
 
     def read_secret(self, name):
         secret = self._get_secret()
 
-        if name not in secret:
+        if name not in secret.data:
             raise KubernetesBackendKeyNotFoundError
 
         return base64.b64decode(secret.data[name])
 
+    def list_secrets(self):
+        secret = self._get_secret()
+
+        return secret.data.keys()
+
     def update_secret(self, name, value):
         secret = self._get_secret()
 
-        if name not in secret:
+        if name not in secret.data:
             raise KubernetesBackendKeyNotFoundError
 
-        secret.data[name] = base64.b64encode(value)
+        secret.data[name] = base64.b64encode(value.encode('UTF-8')).decode('ASCII')
 
         self._put_secret(secret)
 
-    def delete_secret(self, name, value):
+    def delete_secret(self, name):
         secret = self._get_secret()
 
         try:

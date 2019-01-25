@@ -36,7 +36,7 @@ class AppSecrets(Resource):
 
         return Response('Created', 201)
 
-    def get(self, secret_name):
+    def get(self, secret_name=None):
         '''[summary]
         Read a secret from kubernetes
         [description]
@@ -47,7 +47,7 @@ class AppSecrets(Resource):
         self._logger.info('App Secrets endpoint method GET secret "%s" from %s', secret_name, request.remote_addr)
 
         if not secret_name:
-            return Response('Unable to read Kubernetes secret, missing parameters.', 400)
+            return self._list()
 
         try:
             secret = self._kubernetes_backend.read_secret(secret_name)
@@ -60,6 +60,25 @@ class AppSecrets(Resource):
 
         return Response(secret, 200)
 
+    def _list(self):
+        '''[summary]
+        List secrets in kubernetes
+        [description]
+
+        Returns:
+            [type] list -- [description] list of secret names
+        '''
+        self._logger.info('App Secrets endpoint method GET list from %s', request.remote_addr)
+
+        try:
+            secrets = self._kubernetes_backend.list_secrets()
+        except KubernetesBackendError as error:
+            self._logger.error('Unable to list Kubernetes secrets.')
+            self._logger.info(error)
+            return Response('Unable to list Kubernetes secrets.', 500)
+
+        return Response('\n'.join(secrets), 200)
+
     def put(self, secret_name):
         '''[summary]
         Update a secret in kubernetes
@@ -70,14 +89,13 @@ class AppSecrets(Resource):
         '''
         self._logger.info('App Secrets endpoint method PUT secret "%s" from %s', secret_name, request.remote_addr)
 
-        json_body = request.json
-        secret_value = json_body['value']
+        secret_value = request.json['value']
 
         if not secret_name or not secret_value:
             return Response('Unable to update Kubernetes secret, missing parameters.', 400)
 
         try:
-            secret = self._kubernetes_backend.update_secret(secret_name)
+            self._kubernetes_backend.update_secret(secret_name, secret_value)
         except KubernetesBackendKeyNotFoundError:
             return Response('Secret not found.', 404)
         except KubernetesBackendError as error:

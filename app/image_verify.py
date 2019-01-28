@@ -20,7 +20,7 @@ class ImageVerify(Resource):
             resp = requests.post(IMAGE_VERIFIER_URL + '/api/v1.0/image_verify', data=request.get_data())
         except requests.exceptions.RequestException as error:
             self._logger.error('Image Verifier unreachable.')
-            self._logger.debug(error)
+            self._logger.info(error)
             return Response('Image Verifier unreachable.', 500)
 
         return Response(resp.content, resp.status_code)

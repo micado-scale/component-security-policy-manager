@@ -70,10 +70,9 @@ class Secrets(Resource):
         '''
         self._logger.info('Secrets endpoint method PUT secret "%s" from %s', secret_name, request.remote_addr)
 
-        json_body = request.json
-        secret_value = json_body['value']
+        secret_value = request.json['value']
 
-        if not secret_value:
+        if not secret_name or not secret_value:
             return JsonResponse.create(JsonResponse.UPDATE_SECRET_BAD_REQUEST)
 
         try:

@@ -6,12 +6,12 @@ from hvac import Client
 # "http://127.0.0.1:5003" for localhost test,
 # "http://security_policy_manager:5003" for docker environment
 SPM_URL = "http://security_policy_manager:5003"
-#SPM_URL = "http://127.0.0.1:5003"
+# SPM_URL = "http://127.0.0.1:5003"
 
 # "http://127.0.0.1:8200" for localhost test,
 # "http://credstore:8200" for docker environment
 VAULT_URL = "http://vault:8200"
-#VAULT_URL = "http://127.0.0.1:8200"
+# VAULT_URL = "http://127.0.0.1:8200"
 
 # Number of generated unseal keys
 VAULT_SHARES = 1
@@ -48,12 +48,12 @@ class VaultBackend:
         if not self.client:
             self._logger = logging.getLogger('flask.app')
 
-            self._logger.debug('Initializing Vault.')
+            self._logger.info('Initializing Vault @ %s .', VAULT_URL)
 
             self.client = Client(url=VAULT_URL)
 
             if self._is_vault_initialized():
-                self._logger.debug('Vault already initalized.')
+                self._logger.info('Vault already initalized.')
 
                 self._load_keys()
             else:
@@ -61,17 +61,17 @@ class VaultBackend:
                 self._token = vault['root_token']
                 self._unseal_keys = vault['keys']
 
-                self._logger.debug('Vault initalized.')
+                self._logger.info('Vault initalized.')
 
                 self._save_keys()
 
             self.client.token = self._token
 
-            self._logger.debug('Unsealing Vault.')
+            self._logger.info('Unsealing Vault.')
 
             self._unseal_vault()
 
-            self._logger.debug('Vault unsealed.')
+            self._logger.info('Vault unsealed.')
 
     def _load_keys(self):
         try:
@@ -79,7 +79,7 @@ class VaultBackend:
                 self._token = token_file.read()
         except IOError as error:
             self._logger.error('Failed to read Vault token. Will not unseal Vault.')
-            self._logger.debug(error)
+            self._logger.info(error)
             raise VaultBackendError()
 
         try:
@@ -87,7 +87,7 @@ class VaultBackend:
                 self._unseal_keys = unseal_keys_file.read().splitlines()
         except IOError as error:
             self._logger.error('Failed to read Vault unseal keys. Will not unseal Vault.')
-            self._logger.debug(error)
+            self._logger.info(error)
             raise VaultBackendError()
 
     def _save_keys(self):
@@ -96,7 +96,7 @@ class VaultBackend:
                 token_file.write(self._token)
         except IOError as error:
             self._logger.error('Failed to write Vault token to file. Will not be able to reconnect.')
-            self._logger.debug(error)
+            self._logger.info(error)
             raise VaultBackendError()
 
         try:
@@ -105,7 +105,7 @@ class VaultBackend:
                     unseal_keys_file.write("%s\n" % key)
         except IOError as error:
             self._logger.error('Failed to write Vault unseal keys to file. Will not be able to reconnect.')
-            self._logger.debug(error)
+            self._logger.info(error)
             raise VaultBackendError()
 
     def _is_vault_initialized(self):
@@ -113,7 +113,7 @@ class VaultBackend:
             return self.client.sys.is_initialized()
         except Exception as error:
             self._logger.error('Failed to check if Vault is initialized.')
-            self._logger.debug(error)
+            self._logger.info(error)
             raise VaultBackendError()
 
     def _init_vault(self):
@@ -121,7 +121,7 @@ class VaultBackend:
             return self.client.sys.initialize(VAULT_SHARES, VAULT_THRESHOLD)
         except Exception as error:
             self._logger.error('Failed to initialize Vault.')
-            self._logger.debug(error)
+            self._logger.info(error)
             raise VaultBackendError()
 
     def _unseal_vault(self):
@@ -129,7 +129,7 @@ class VaultBackend:
             self.client.sys.submit_unseal_keys(self._unseal_keys)
         except Exception as error:
             self._logger.error('Failed to unseal Vault.')
-            self._logger.debug(error)
+            self._logger.info(error)
             raise VaultBackendError()
 
 
@@ -164,7 +164,7 @@ class VaultPkiBackend:
         return requests.request('LIST', VAULT_URL + path, headers={'X-Vault-Token': self._vault_backend._token})
 
     def _init_pki(self):
-        self._logger.debug('Initializing Vault PKI backend.')
+        self._logger.info('Initializing Vault PKI backend.')
 
         try:
             if self._mount_pki_backend():
@@ -172,15 +172,15 @@ class VaultPkiBackend:
                 self._set_urls()
                 self._create_role()
             else:
-                self._logger.debug('Vault PKI backend already initialized.')
+                self._logger.info('Vault PKI backend already initialized.')
         except Exception as error:
             self._logger.error('Failed to initialize Vault PKI backend.')
-            self._logger.debug(error)
+            self._logger.info(error)
 
             raise VaultBackendError()
 
     def _mount_pki_backend(self):
-        self._logger.debug('Enabling Vault PKI Secrets backend.')
+        self._logger.info('Enabling Vault PKI Secrets backend.')
 
         params = {
             'type': 'pki',
@@ -192,7 +192,7 @@ class VaultPkiBackend:
 
         resp = self.post('/v1/sys/mounts/pki', params)
 
-        self._logger.debug('HTTP %s: %s', resp.status_code, resp.text)
+        self._logger.debug('HTTP response from Vault: %s - %s', resp.status_code, resp.text)
 
         if resp.status_code == 204:
             return True
@@ -202,7 +202,7 @@ class VaultPkiBackend:
             raise VaultBackendError()
 
     def _generate_root_ca(self):
-        self._logger.debug('Generating root CA.')
+        self._logger.info('Generating root CA.')
 
         params = {
             'common_name': 'micado',
@@ -211,13 +211,13 @@ class VaultPkiBackend:
 
         resp = self.post('/v1/pki/root/generate/internal', params)
 
-        self._logger.debug('HTTP %s: %s', resp.status_code, resp.text)
+        self._logger.debug('HTTP response from Vault: %s - %s', resp.status_code, resp.text)
 
         if resp.status_code != 200:
             raise VaultBackendError()
 
     def _set_urls(self):
-        self._logger.debug('Updating distribution URL\'s.')
+        self._logger.info('Updating distribution URL\'s.')
 
         params = {
             'issuing_certificates': SPM_URL + '/v1.0/nodecerts/ca',
@@ -226,13 +226,13 @@ class VaultPkiBackend:
 
         resp = self.post('/v1/pki/config/urls', params)
 
-        self._logger.debug('HTTP %s: %s', resp.status_code, resp.text)
+        self._logger.debug('HTTP response from Vault: %s - %s', resp.status_code, resp.text)
 
         if resp.status_code != 204:
             raise VaultBackendError()
 
     def _create_role(self):
-        self._logger.debug('Creating role for signing.')
+        self._logger.info('Creating role for signing.')
 
         params = {
             'allowed_domains': ['micado'],
@@ -242,7 +242,7 @@ class VaultPkiBackend:
 
         resp = self.post('/v1/pki/roles/micado', params)
 
-        self._logger.debug('HTTP %s: %s', resp.status_code, resp.text)
+        self._logger.debug('HTTP response from Vault: %s - %s', resp.status_code, resp.text)
 
         if resp.status_code != 204:
             raise VaultBackendError()

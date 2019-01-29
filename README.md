@@ -1,5 +1,5 @@
 # Component-security-policy-manager
-v1.0:
+v2.0:
 
 ## Overview: 
 
@@ -7,27 +7,40 @@ This module provides APIs to manage sensitive information, including application
 
 ### Infrastructure sensitive information or infrastructure secret:
 
-+ Initialize a vault to store secrets for the infrastructure
-+ Create or update a secret
-+ Read a secret
-+ Delete a secret
++ Create,
++ Read,
++ Update or
++ Delete a secret in Hashicorp Vault
 
 ### Application sensitive information or application secret:
 
-+ Add application sensitive information as docker secret
-+ Provision the secret to application services in worker nodes
++ Create,
++ Read,
++ Update or
++ Delete an application secret in kubernetes
+
+### Worker node IPsec certificates:
+
++ Create,
++ Read or
++ Revoke a certificate,
++ Get Certificate Revocation List
+
+### Worker node kubernetes join tokens:
+
++ Create or
++ Invalidate a join token
+
+### Security Enablers:
+
++ Crypto Engine
++ Image Integrity Verifier
 
 ## How to use the API:
 
 ### Infrastructure sensitive information or infrastructure secret
 
-+ Initialize a vault to store secrets
-
-```curl -H "Content-Type: application/json" -d '{"shares":"3","threshold":"2"}' -X POST spm:5003/v1.0/vaults```
-
-(Shares must be equal or larger than threshold. If shares > 1, threshold must be larger than 1)
-
-+ Add a secret 'secret1' into the initialized vault. If the secret exists, it will be overwritten.
++ Add a secret 'secret1' into the vault. If the secret exists, it will be overwritten.
 
 ```curl -H "Content-Type: application/json" -d '{"name":"secret1","value":"123"}' -X POST spm:5003/v1.0/secrets```
 
@@ -45,40 +58,17 @@ This module provides APIs to manage sensitive information, including application
 
 ### Application sensitive information or application secret
 
-+ Assuming that a service named 'app1' is already created
++ Add an applicaton sensitive information as kubernetes secret and distribute it to pods. If the application service has existing secrets, this function add one more while keeping the other secrets intact.
 
-+ Add an applicaton sensitive information as docker secret and distribute it to containers of the application app1 (If the application service has existing secrets, this function add one more while keeping the other secrets intact):
+```curl -H "Content-Type: application/json" -d '{"name":"secret1","value":"123"}' -X POST spm:5003/v1.0/appsecrets```
 
-```curl -H "Content-Type: application/json" -d '{"name":"secret1","value":"123","service":"app1"}' -X POST spm:5003/v1.0/appsecrets```
++ Retrieve kubernetes secret with id 'secret1'
 
-+ Verify if the secret is added to the service or not by calling the below command line in the master node
-
-```docker service inspect app1```
-
-You shall see something like this:
-	
-```
-Spec": {
-	"TaskTemplate": { 
-        "ContainerSpec": {
-            "Secrets": [
-            {
-                "File": {
-                    "Name": "secret1",
-                },
-                "SecretID":,
-                "SecretName": "secret1"
-	        },
-            ...
-```
-
-+ Retrieve docker secret id of 'secret1'
-
-curl -X GET spm:5003/v1.0/appsecrets/secret1
+```curl -X GET spm:5003/v1.0/appsecrets/secret1```
 
 + Remove a secret named 'secret1' from the service
 
-curl -H "Content-Type: application/json" -d '{"service":"app1"}' -X DELETE spm:5003/v1.0/appsecrets/secret1
+```curl -X DELETE spm:5003/v1.0/appsecrets/secret1```
 
 ## How to use the automatic test script for managing secrets infrastructure sensitive information:
 
@@ -112,27 +102,8 @@ listener "tcp" {
 
 3. Run the source code by command line
 
-```python my_script.py```
+```gunicorn -b 0.0.0.0:5003 app:app```
 
 4. Run the test script by command line
 
-```robot test_script.rst```
-
-## How to use the automatic test script for managing secrets application sensitive information:
-
-1. Run the python code using sudo role
-
-``` sudo python my_script.py```
-
-Please notice that the python code must be run with sudo
-
-2. Create a docker service
-
-
-``` docker swarm init``` 
-
-``` docker service create --name app1 <docker_image>``` 
-
-3.Run the test script by command line
-
-```robot test_script.rst``` 
+```robot test/test_script.rst```

@@ -13,3 +13,4 @@ RUN apt-get install -y --allow-unauthenticated kubeadm curl
 RUN rm -rf /var/lib/apt/lists/* /tmp/requirements.txt
 WORKDIR /spm
 CMD [ "gunicorn", "-b", "0.0.0.0:5003", "app:app"]
+HEALTHCHECK --interval=10s --timeout=2s --retries=50 CMD curl -f 127.0.0.1:5003 || exit 1

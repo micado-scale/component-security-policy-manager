@@ -1,5 +1,6 @@
 import logging
 import json
+import uuid
 from flask import request, Response
 from flask_restful import Resource
 from requests import exceptions
@@ -20,8 +21,10 @@ class NodeCerts(Resource):
         '''
         self._logger.info('Node Certs endpoint method POST from %s', request.remote_addr)
 
+        worker_uuid = uuid.uuid4().hex
+
         params = {
-            'common_name': 'workernode.micado',
+            'common_name': worker_uuid + '.workernode.micado',
             'format': 'pem_bundle'
         }
 

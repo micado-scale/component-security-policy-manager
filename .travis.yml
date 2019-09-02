@@ -6,7 +6,7 @@ install:
   - pip install -r requirements.txt
   - pip install docutils
   - pip install robotframework
-before_test:
+before_script:
   - |
       gunicorn -b 0.0.0.0:5003 app:app &
       SERVER_PID=$!

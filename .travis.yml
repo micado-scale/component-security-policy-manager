@@ -1,0 +1,15 @@
+language: python
+python:
+  - "3.6"
+cache: pip
+install:
+  - pip install -r requirements.txt
+  - pip install robotframework
+before_test:
+  - |
+      gunicorn -b 0.0.0.0:5003 app:app &
+      SERVER_PID=$!
+script:
+  - robot test/test_script.rst
+after_script:
+  - kill $SERVER_PID

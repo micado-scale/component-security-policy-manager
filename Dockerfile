@@ -6,7 +6,8 @@ COPY requirements.txt /tmp/
 
 RUN pip install -r /tmp/requirements.txt
 RUN apt-get update
-RUN apt-get install -y apt-transport-https
+RUN apt-get install -y apt-transport-https curl
+RUN curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 RUN bash -c 'echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" > /etc/apt/sources.list.d/kubernetes.list'
 RUN apt-get update
 RUN apt-get install -y --allow-unauthenticated kubeadm curl

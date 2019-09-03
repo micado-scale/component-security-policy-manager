@@ -1,10 +1,10 @@
 .. default-role:: code
 .. code:: robotframework
 
-	*** Settings *** 				
+	*** Settings ***
 	Library     CredStoreLibrary.py
 
-	*** Test Cases *** 	
+	*** Test Cases ***
 	Admin can add a secret
 		Add secret   ${secretname}    ${secretvalue}
 		Status should be    ${http_code_created}
@@ -51,6 +51,7 @@
 		Get a certificate   ${secretname}
 		Status should be    ${http_code_ok}
                 Data should not be empty
+                Common name should be ${secretname}
 
 	*** Variables ***
 	${secretname}               secret1

@@ -16,7 +16,7 @@ install:
   - pip install docutils
   - pip install robotframework
 before_script:
-  - docker run -d --cap-add=IPC_LOCK -v $(pwd)/test/:/vault/ --name vault -p 127.0.0.1:8200:8200 vault:1.2.0 server
+  - docker run -d --cap-add=IPC_LOCK -v $(pwd)/test/:/vault/ --name vault -p 127.0.0.1:8200:8200 vault:1.0.3 server
   - docker exec -t vault netstat -antup
   - |
       gunicorn -b 0.0.0.0:5003 app:app &

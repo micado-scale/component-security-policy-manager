@@ -11,6 +11,9 @@ addons:
     - security_policy_manager
     - crypto_engine
     - iivr
+  apt:
+    packages:
+      - lynx
 install:
   - pip install -r requirements.txt
   - pip install docutils
@@ -24,4 +27,7 @@ before_script:
 script:
   - robot test/test_script.rst
 after_script:
+  - cat output.xml
+  - lynx -dump report.html
+  - lynx -dump log.html
   - kill $SERVER_PID

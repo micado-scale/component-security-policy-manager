@@ -58,7 +58,7 @@ class CredStoreLibrary(object):
 
     def create_a_certificate(self, cert_common_name=None):
         url = 'http://127.0.0.1:5003/v1.0/nodecerts'
-        if cert_common_name is not None:
+        if cert_common_name is not "":
             payload = {'cert_common_name': cert_common_name}
             res = requests.post(url, json=payload)
         else:

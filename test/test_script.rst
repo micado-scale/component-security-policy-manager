@@ -38,11 +38,11 @@
 		Status should be    ${http_code_bad_request}
 
 	Admin can get the certification authority
-		Get the certification authority
+		Get certification authority
 		Status should be    ${http_code_ok}
 
 	Admin can get a certificate
-		Get a certificate
+		Get a certificate   ${EMPTY}
 		Status should be    ${http_code_created}
 
 	Admin can get a named certificate
@@ -78,7 +78,7 @@
 		[Arguments]    ${secretname}
 		delete_a_secret    ${secretname}
 
-        Get the certification authority
+        Get certification authority
 		get_the_certification_authority
 
         Get a certificate

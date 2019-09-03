@@ -19,7 +19,7 @@ before_script:
   - |
       gunicorn -b 0.0.0.0:5003 app:app &
       SERVER_PID=$!
-  - docker run -d --cap-add=IPC_LOCK -p 127.0.0.1:8200:8200 vault
+  - docker run -d --cap-add=IPC_LOCK -v $(pwd)/test/:/vault/ -p 127.0.0.1:8200:8200 vault server
 script:
   - robot test/test_script.rst
 after_script:

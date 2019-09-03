@@ -21,10 +21,12 @@ class NodeCerts(Resource):
         '''
         self._logger.info('Node Certs endpoint method POST from %s', request.remote_addr)
 
-        worker_uuid = uuid.uuid4().hex
+        cert_common_name = uuid.uuid4().hex + '.workernode.micado'
+        if request.form.has_key('cert_common_name'):
+            cert_common_name = request.form[cert_common_name]
 
         params = {
-            'common_name': worker_uuid + '.workernode.micado',
+            'common_name': cert_common_name,
             'format': 'pem_bundle'
         }
 

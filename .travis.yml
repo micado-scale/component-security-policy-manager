@@ -17,6 +17,7 @@ addons:
 install:
   - pip install -r requirements.txt
   - pip install docutils
+  - pip install pyopenssl
   - pip install robotframework
 before_script:
   - docker run -d --cap-add=IPC_LOCK -v $(pwd)/test/:/vault/ --name vault -p 127.0.0.1:8200:8200 vault:1.0.3 server

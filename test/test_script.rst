@@ -37,6 +37,18 @@
 		Add secret   ${secretname}    ${EMPTY}
 		Status should be    ${http_code_bad_request}
 
+	Admin can get the certification authority
+		Get the certification authority
+		Status should be    ${http_code_ok}
+
+	Admin can get a certificate
+		Get a certificate
+		Status should be    ${http_code_created}
+
+	Admin can get a named certificate
+		Get a certificate   ${secretname}
+		Status should be    ${http_code_created}
+
 	*** Variables ***
 	${secretname}               secret1
 	${secretvalue}              123
@@ -65,3 +77,11 @@
 	Delete secret
 		[Arguments]    ${secretname}
 		delete_a_secret    ${secretname}
+
+        Get the certification authority
+		get_the_certification_authority
+
+        Get a certificate
+		[Arguments]    ${cert_common_name}
+		create_a_certificate    ${cert_common_name}
+               

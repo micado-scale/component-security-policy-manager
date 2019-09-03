@@ -22,6 +22,11 @@ class CredStoreLibrary(object):
             raise AssertionError("Expected data to be '%s' but was '%s'."
                                  % (expected_data, self._data))
 
+    def data_should_not_be_empty(self):
+        if str(self._data) == "":
+            raise AssertionError("Data should not be empty, but was '%s'"
+                                 % (self._data,))
+
     def add_a_secret(self, name, value):
         url = 'http://127.0.0.1:5003/v1.0/secrets'
         payload = {'name': name, 'value': value}
@@ -53,8 +58,8 @@ class CredStoreLibrary(object):
     def get_the_certification_authority(self):
         url = 'http://127.0.0.1:5003/v1.0/nodecerts/ca'
         res = requests.get(url)
-        json_data = json.loads(res.text)
-        self._status = json_data['code']
+        self._status = res.response_code
+        self._data = res.text
 
     def create_a_certificate(self, cert_common_name=None):
         url = 'http://127.0.0.1:5003/v1.0/nodecerts'

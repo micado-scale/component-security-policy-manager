@@ -48,15 +48,15 @@
                 Data should not be empty
 
 	Admin can get a named certificate
-		Get a certificate   ${secretname}
+		Get a certificate   ${cert_common_name}
 		Status should be    ${http_code_ok}
-                Data should not be empty
-                Common name should be  ${secretname}.micado
+                Common name should be  ${cert_common_name}
 
 	*** Variables ***
 	${secretname}               secret1
 	${secretvalue}              123
 	${new_secretvalue}          456
+        ${cert_common_name}         something.micado
 	${http_code_ok}              200
 	${http_code_not_found}       404
 	${http_code_created}		 201

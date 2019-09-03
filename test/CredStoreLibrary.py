@@ -49,3 +49,19 @@ class CredStoreLibrary(object):
         self._status = json_data['code']
         if(self._status == http_code_ok):
             self._data = json_data['secret_value']
+
+    def get_the_certification_authority(self):
+        url = 'http://127.0.0.1:5003/v1.0/nodecerts/ca'
+        res = requests.get(url)
+        json_data = json.loads(res.text)
+        self._status = json_data['code']
+
+    def create_a_certificate(self, cert_common_name=None):
+        url = 'http://127.0.0.1:5003/v1.0/nodecerts'
+        if cert_common_name is not None:
+            payload = {'cert_common_name': cert_common_name}
+            res = requests.post(url, json=payload)
+        else:
+            res = requests.post(url)
+        json_data = json.loads(res.text)
+        self._status = json_data['code']

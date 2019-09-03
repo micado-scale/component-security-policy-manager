@@ -23,7 +23,7 @@ class NodeCerts(Resource):
 
         cert_common_name = uuid.uuid4().hex + '.workernode.micado'
         if 'cert_common_name' in request.form:
-            cert_common_name = request.form[cert_common_name]
+            cert_common_name = request.form["cert_common_name"]
 
         params = {
             'common_name': cert_common_name,

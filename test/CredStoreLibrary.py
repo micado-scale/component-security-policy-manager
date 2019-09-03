@@ -58,7 +58,7 @@ class CredStoreLibrary(object):
     def get_the_certification_authority(self):
         url = 'http://127.0.0.1:5003/v1.0/nodecerts/ca'
         res = requests.get(url)
-        self._status = res.response_code
+        self._status = res.status_code
         self._data = res.text
 
     def create_a_certificate(self, cert_common_name=None):
@@ -68,5 +68,5 @@ class CredStoreLibrary(object):
             res = requests.post(url, json=payload)
         else:
             res = requests.post(url)
-        json_data = json.loads(res.text)
-        self._status = json_data['code']
+        self._status = res.status_code
+        self._data = res.text

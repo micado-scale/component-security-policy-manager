@@ -44,12 +44,12 @@
 
 	Admin can get a certificate
 		Get a certificate   ${EMPTY}
-		Status should be    ${http_code_created}
+		Status should be    ${http_code_ok}
                 Data should not be empty
 
 	Admin can get a named certificate
 		Get a certificate   ${secretname}
-		Status should be    ${http_code_created}
+		Status should be    ${http_code_ok}
                 Data should not be empty
 
 	*** Variables ***

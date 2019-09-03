@@ -22,11 +22,12 @@ before_script:
   - docker run -d --cap-add=IPC_LOCK -v $(pwd)/test/:/vault/ --name vault -p 127.0.0.1:8200:8200 vault:1.0.3 server
   - docker exec -t vault netstat -antup
   - |
-      gunicorn -b 0.0.0.0:5003 app:app &
+      gunicorn -b 0.0.0.0:5003 --log-file=- app:app &
       SERVER_PID=$!
 script:
   - robot test/test_script.rst
 after_script:
+  - docker logs vault
   - cat output.xml
   - lynx -dump report.html
   - lynx -dump log.html

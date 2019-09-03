@@ -1,5 +1,5 @@
 storage "file" {
-	path = "datafile"
+	path = "/tmp/datafile"
 }
 listener "tcp" {
 	address     = "0.0.0.0:8200"

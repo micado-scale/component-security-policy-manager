@@ -31,9 +31,9 @@ class CredStoreLibrary(object):
     def common_name_should_be(self, expected_data):
         cert = crypto.load_certificate(crypto.FILETYPE_PEM, self._data)
         subject = cert.get_subject()
-        if subject != expected_data:
+        if str(subject) != "/CN="+expected_data:
             raise AssertionError("Expected common name was '%s' but was '%s'."
-                                 % (expected_data, subject))
+                                 % ("/CN="+expected_data, str(subject)))
 
     def add_a_secret(self, name, value):
         url = 'http://127.0.0.1:5003/v1.0/secrets'
@@ -73,7 +73,7 @@ class CredStoreLibrary(object):
         url = 'http://127.0.0.1:5003/v1.0/nodecerts'
         if cert_common_name is not "":
             payload = {'cert_common_name': cert_common_name}
-            res = requests.post(url, json=payload)
+            res = requests.post(url, data=payload)
         else:
             res = requests.post(url)
         self._status = res.status_code

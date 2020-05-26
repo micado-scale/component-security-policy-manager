@@ -36,6 +36,10 @@ class VaultBackend:
 
     client = None
 
+    _token = ""
+    
+    _unseal_keys = ""
+    
     def __init__(self):
         '''[summary]
         Initializes and unseals the Vault

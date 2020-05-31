@@ -19,6 +19,7 @@ class AppSecrets(Resource):
             name -- name of secret
             value -- value of secret
         '''
+        self._logger.info("Received request:",request)
         secret_name = request.json['name']
         secret_value = request.json['value']
 

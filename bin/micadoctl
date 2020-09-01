@@ -107,10 +107,36 @@ def user_del(user):
     payload = {'username': user}
     ok, result = call_api_endpoint('deleteuser', 'put', payload)
     if ok:
-        click.echo("Success!")
+        click.echo(result)
     else:
         click.echo(result.get('user message', 'Failed'))
 
+@users.command('role', short_help='Get role of user')
+@click.argument('user')
+def user_role():
+    """Get role of user"""
+    payload = {'username': user}
+    ok, result = call_api_endpoint('getrole', 'get', payload)
+    if ok:
+        click.echo(table.table)
+    else:
+        click.echo(result.get('user message', 'Failed'))
+
+@users.command('changepwd', short_help='Change password of user')
+@click.argument('user')
+@click.argument('oldpwd')
+@click.argument('newpwd')
+def user_change_pwd():
+    """Change password of user"""
+    payload = {'username': user, 'oldpasswd': oldpwd, 'newpasswd': newpwd}
+    ok, result = call_api_endpoint('changepwd', 'put', payload)
+    if ok:
+        password = result.get('new password', '')
+        click.echo("Success!")
+        click.echo(result)
+    else:
+        click.echo(result.get('user message', 'Failed'))
+        
 @cli.group()
 def service():
     """Manage MiCADO services"""

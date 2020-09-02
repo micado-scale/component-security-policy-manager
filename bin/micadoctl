@@ -113,10 +113,10 @@ def user_del(user):
 
 @users.command('role', short_help='Get role of user')
 @click.argument('user')
-def user_role():
+def user_role(user):
     """Get role of user"""
     payload = {'username': user}
-    ok, result = call_api_endpoint('getrole', 'put', payload)
+    ok, result = call_api_endpoint('getrole', 'get', payload)
     if ok:
         click.echo(result)
     else:
@@ -126,7 +126,7 @@ def user_role():
 @click.argument('user')
 @click.argument('oldpwd')
 @click.argument('newpwd')
-def user_change_pwd():
+def user_change_pwd(user,oldpwd,newpwd):
     """Change password of user"""
     payload = {'username': user, 'oldpasswd': oldpwd, 'newpasswd': newpwd}
     ok, result = call_api_endpoint('changepwd', 'put', payload)

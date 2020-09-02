@@ -116,9 +116,9 @@ def user_del(user):
 def user_role():
     """Get role of user"""
     payload = {'username': user}
-    ok, result = call_api_endpoint('getrole', 'get', payload)
+    ok, result = call_api_endpoint('getrole', 'put', payload)
     if ok:
-        click.echo(table.table)
+        click.echo(result)
     else:
         click.echo(result.get('user message', 'Failed'))
 
@@ -131,8 +131,6 @@ def user_change_pwd():
     payload = {'username': user, 'oldpasswd': oldpwd, 'newpasswd': newpwd}
     ok, result = call_api_endpoint('changepwd', 'put', payload)
     if ok:
-        password = result.get('new password', '')
-        click.echo("Success!")
         click.echo(result)
     else:
         click.echo(result.get('user message', 'Failed'))

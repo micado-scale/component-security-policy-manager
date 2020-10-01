@@ -1,0 +1,17 @@
+FROM python:3.8-alpine
+
+COPY requirements.txt /tmp/
+
+RUN pip install -r /tmp/requirements.txt \
+  && pip install terminaltables \
+  && rm -rf /root/.cache \
+  && rm -f /tmp/requirements.txt
+
+RUN apk add --no-cache curl bash
+
+COPY app /spm/app
+COPY bin /usr/local/bin
+COPY lib /spm/lib
+
+WORKDIR /spm
+CMD [ "gunicorn", "-b", "0.0.0.0:5003", "app:app"]

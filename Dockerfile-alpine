@@ -2,12 +2,16 @@ FROM python:3.8-alpine
 
 COPY requirements.txt /tmp/
 
+RUN apk add --no-cache curl \
+  bash \
+  musl-dev \
+  gcc \
+  && rm -rf /var/cache/apk/*
+
 RUN pip install -r /tmp/requirements.txt \
   && pip install terminaltables \
   && rm -rf /root/.cache \
   && rm -f /tmp/requirements.txt
-
-RUN apk add --no-cache curl bash
 
 COPY app /spm/app
 COPY bin /usr/local/bin
